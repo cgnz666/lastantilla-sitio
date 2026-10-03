@@ -1344,18 +1344,13 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
     f._subject = "Last Antilla · Nueva consulta" + (r.sketch ? " (solo el boceto)" : r.signed ? " · acuerdo firmado" : "") + ": " + r.name;
     f._template = "table"; f._captcha = "false"; f._honey = "";
     if (CONFIG.notify_cc.length) f._cc = CONFIG.notify_cc.join(",");
-    put("Resumen", r.line);
-    put("Estado", r.estado);
-    put("Contacto", r.contacto);
-    put("Fechas", r.fechas);
-    put("Alertas", bullets(r.alerts));
-    put("Días", r.marcados.join(", "));
-    put("Acuerdo", r.acuerdo);
-    if (withPdf) put("Documento", "Todo lo demás va en el PDF adjunto: ficha, días sugeridos, preguntas para la llamada" + (r.signed ? " y el acuerdo firmado" : "") + ".");
-    else {
-      put("Grupo", bullets(r.grupo)); put("Llamada", bullets(r.qs)); put("Cliente", bullets(r.cliente)); put("Emergencia", r.emergencia);
-      if (r.signed) put("Texto", r.agreementText);
-    }
+    // With the PDF, the email is one line; the PDF is the consultation.
+    if (withPdf) { put("Consulta", r.name + ": la consulta completa va en el PDF adjunto."); return f; }
+    // Without it (the PDF couldn't be made), the essentials go as text so nothing is lost.
+    put("Resumen", r.line); put("Estado", r.estado); put("Contacto", r.contacto); put("Fechas", r.fechas);
+    put("Alertas", bullets(r.alerts)); put("Días", r.marcados.join(", ")); put("Grupo", bullets(r.grupo));
+    put("Llamada", bullets(r.qs)); put("Cliente", bullets(r.cliente)); put("Emergencia", r.emergencia); put("Acuerdo", r.acuerdo);
+    if (r.signed) put("Texto", r.agreementText);
     return f;
   }
 
@@ -1431,9 +1426,9 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
 
   function submit(data, opts) {
     window.laLastPayload = data;
-    var keepalive = !!(opts && opts.keepalive);
-    // Leaving the page: no time for the PDF, so the short email goes on its own with the essentials.
-    var pdf = keepalive ? Promise.resolve(null) : buildPdf(data).catch(function () { return null; });
+    var keepalive = !!(opts && opts.keepalive), ready = opts && opts.pdf;
+    // Leaving the page there's no time to draw it, so it uses the PDF prepared beforehand (see sketchPdf).
+    var pdf = ready ? Promise.resolve(ready) : keepalive ? Promise.resolve(null) : buildPdf(data).catch(function () { return null; });
     return pdf.then(function (blob) {
       var body = emailBody(data, !!blob);
       if (LOCAL) { console.log("[Last Antilla] submit (local, not sent)", body); window.laLastEmail = body; window.laLastPdf = blob; return { ok: true }; }
@@ -1447,10 +1442,12 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
   }
   // The sketch waits: if the client goes on to the details, one complete email goes at the end.
   // It goes on its own if they stop there, leave the page or stay on the thank-you screen.
-  var sketchPending = false, sketchTimer = null;
+  var sketchPending = false, sketchTimer = null, sketchPdf = null;
+  function prepareSketchPdf() { sketchPdf = null; buildPdf(payload("sketch")).then(function (b) { sketchPdf = b; }, function () {}); }
   function sendSketch(opts) {
     if (!sketchPending) return Promise.resolve();
     sketchPending = false; clearTimeout(sketchTimer);
+    opts = opts || {}; if (sketchPdf) opts.pdf = sketchPdf;
     return submit(payload("sketch"), opts).catch(function (e) { sketchPending = true; throw e; });
   }
   function sendFailed(box) {
@@ -1699,7 +1696,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
     var bar = document.createElement("div"); bar.className = "hostbar";
     bar.innerHTML = "<b>Modo anfitrión</b>" +
       '<button data-t="solo">1 adulto</button><button data-t="solokids">1 + menores</button><button data-t="two">2</button><button data-t="four">4</button><button data-t="big">13</button>' +
-      '<button data-h="sheet">Ficha</button><button data-h="json">JSON</button><button data-h="dl-json">Bajar JSON</button><button data-h="dl-sheet">Bajar ficha</button><button data-h="close">Cerrar</button>';
+      '<button data-h="sheet">Ficha</button><button data-h="json">JSON</button><button data-h="dl-json">Bajar JSON</button><button data-h="dl-sheet">Bajar ficha</button><button data-h="pdf">Bajar PDF</button><button data-h="close">Cerrar</button>';
     document.body.appendChild(bar); document.body.style.paddingBottom = "60px";
     var panel = $("#hostpanel");
     bar.addEventListener("click", function (e) {
@@ -1711,6 +1708,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
       if (b.dataset.h === "dl-json") download("last-antilla-" + (p.lead_name || "consulta").replace(/\W+/g, "-").toLowerCase() + ".json", JSON.stringify(p, null, 2), "application/json");
       if (b.dataset.h === "dl-sheet") download("ficha-" + (p.lead_name || "consulta").replace(/\W+/g, "-").toLowerCase() + ".html", '<!doctype html><meta charset="utf-8"><title>Ficha</title><body style="font-family:sans-serif;max-width:760px;margin:24px auto;padding:0 16px">' + hostSheet(p), "text/html");
       if (b.dataset.h === "close") panel.hidden = true;
+      if (b.dataset.h === "pdf") { var pd = payload("details"); if (S.signature_name || S.lead_name) { renderDoc(); pd.signature_name = S.signature_name || S.lead_name; pd.signature_date = new Date().toISOString().slice(0, 10); pd.agreement = htmlToText($("#doc").innerHTML).replace(/\n(\d+\. )/g, "\n\n$1"); } buildPdf(pd).then(function (bl) { var a = document.createElement("a"); a.href = URL.createObjectURL(bl); a.download = pdfName(pd); document.body.appendChild(a); a.click(); a.remove(); }); }
     });
   }
 
@@ -1775,7 +1773,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
       S.stage = "sketch_sent"; S.sketch_sent_at = new Date().toISOString(); save();
       sketchPending = true; clearTimeout(sketchTimer);
       sketchTimer = setTimeout(function () { if (current === "s-sent") sendSketch().catch(function () {}); }, 10 * 60 * 1000);
-      show("s-sent"); loadPdfLib().catch(function () {});
+      show("s-sent"); prepareSketchPdf();
     });
     ["email", "phone"].forEach(function (id) { $("#" + id).addEventListener("input", function () { S[id] = this.value.trim(); save(); }); });
     $("#contact_pref").addEventListener("change", function () { S.contact_pref = radioVal("contact_pref"); save(); });
