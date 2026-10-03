@@ -1,0 +1,16 @@
+name: Prueba del formulario
+on:
+  push:
+    paths: [".github/workflows/prueba-formulario.yml"]
+  workflow_dispatch:
+jobs:
+  prueba:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enviar prueba a FormSubmit
+        run: |
+          curl -sS -X POST "https://formsubmit.co/ajax/lastantilla@gmail.com" \
+            -H "Content-Type: application/json" -H "Accept: application/json" \
+            -H "Origin: https://lastantillatravel.co" -H "Referer: https://lastantillatravel.co/plan.html" \
+            -d '{"_subject":"Last Antilla · PRUEBA","_template":"table","_captcha":"false","_cc":"cgnz666@gmail.com,faorengo@gmail.com","Cliente":"PRUEBA","Etapa":"Prueba de activacion"}'
+          echo
