@@ -394,6 +394,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
         </div>
         <p class="small" style="margin-top:14px">Every question can be skipped.</p>
       </div>
+      <p class="err" id="sent-err" role="alert" hidden></p>
     </div>
   </section>
 
@@ -727,7 +728,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
     health_retention: null,      // plazo de borrado de datos de salud, p. ej. "90 days"
     schedule_link: null,         // enlace para agendar la llamada
     legal_ready: true,           // documento legal activo; false lo oculta y "Send the details" envía sin firma
-    agreement_version: "2026-10-03 (provisional, sin revisión de abogado)", // cambiarla cada vez que cambie el texto
+    agreement_version: "2026-10-03, provisional, sin revisión de abogado", // cambiarla cada vez que cambie el texto
     brand_email: "lastantilla@gmail.com",
     notify_to: "cgnz666@gmail.com",   // receives every submission (FormSubmit); after activation it can be the alias FormSubmit sends
     notify_cc: ["lastantilla@gmail.com", "faorengo@gmail.com"] // more addresses that get a copy
@@ -1306,27 +1307,62 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
     $$("button", d).forEach(function (b) { b.remove(); });
     return d.textContent.replace(/: \n/g, "\n").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
   }
-  function answersText() { renderReview(); return htmlToText($("#rev").innerHTML); }
-  function submit(data) {
+  // One email per client, in short sections a host can scan. FormSubmit lays each field out as a table row.
+  var ES_PREF = { whatsapp: "WhatsApp", text: "mensaje de texto", email: "correo", call: "llamada" };
+  var ES_HEARD = { concierge: "un concierge", advisor: "un asesor de viajes", instagram: "Instagram", search: "una búsqueda", referral: "una amistad", other: "otro medio" };
+  var ES_PLANNER = { ourselves: "ellos mismos", advisor: "un asesor de viajes", assistant: "un asistente", concierge: "un concierge" };
+  var ES_LANG = { en: "inglés", es: "español", both: "inglés y español" };
+  function esDate(iso) { var d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.toLocaleDateString("es-PR", { day: "numeric", month: "long", year: "numeric" }); }
+  function bullets(arr) { return arr.filter(Boolean).map(function (x) { return "• " + x; }).join("\n"); }
+  function emailBody(data) {
+    var sh = hostSheet(data, true), signed = !!data.agreement, sketch = data.stage === "sketch", f = {};
+    function put(k, v) { if (v && String(v).trim()) f[k] = String(v).trim(); }
+    f._subject = "Last Antilla · Nueva consulta" + (sketch ? " (solo el boceto)" : signed ? " · acuerdo firmado" : "") + ": " + (data.lead_name || "sin nombre");
+    f._template = "table"; f._captcha = "false"; f._honey = "";
+    if (CONFIG.notify_cc.length) f._cc = CONFIG.notify_cc.join(",");
+    put("Resumen", sh.line);
+    put("Estado", sketch ? "Envió el boceto y no completó los detalles" : "Completó los detalles" + (signed ? " y firmó el acuerdo" : ", sin firmar el acuerdo"));
+    put("Contacto", [data.email, data.phone].filter(Boolean).join("  ·  ") + "\nPrefiere: " + (ES_PREF[data.contact_pref] || data.contact_pref));
+    put("Fechas", data.arrival_date ? esDate(data.arrival_date) + (data.departure_date ? " al " + esDate(data.departure_date) : "") :
+      data.dates_flexible ? "Sin fechas todavía: piensa en " + (data.dates_flexible.month === "undecided" ? "algún momento pronto" : new Date(data.dates_flexible.month + "-15T12:00:00").toLocaleDateString("es-PR", { month: "long", year: "numeric" })) + ", unos " + data.dates_flexible.days + " días" : "");
+    put("Alertas", bullets(sh.alerts));
+    put("Grupo", bullets(sh.grupo));
+    put("Días que marcó", bullets((data.days_of_interest || []).map(function (id) { return DAY[id].name; })));
+    put("Días sugeridos", bullets(sh.sug) + (sh.journey ? "\nViaje que encaja: " + sh.journey : ""));
+    put("Para la llamada", bullets(sh.qs));
+    put("Quiere llevarse de recuerdo", data.remember);
+    put("Logística resuelta", bullets(sh.done));
+    put("Sobre el cliente", bullets([
+      data.home_city && "Viene de: " + data.home_city, data.occupation && "Oficio: " + data.occupation,
+      data.pr_before && "Puerto Rico: " + ES.pr[data.pr_before], data.pr_roots === "yes" && "Raíces en la isla" + (data.roots_town ? ": " + data.roots_town : ""),
+      data.language && "Idioma: " + ES_LANG[data.language], data.best_trip && "Su mejor viaje: " + data.best_trip,
+      data.celebrations && "Fechas especiales: " + data.celebrations, data.not_wanted && "No quiere: " + data.not_wanted,
+      data.other_stops && "Viaje más largo: " + data.other_stops, data.planner && "Planifica: " + ES_PLANNER[data.planner],
+      data.heard_from && "Nos conoció por " + ES_HEARD[data.heard_from], data.interests.length && "Le interesa: " + data.interests.map(function (k) { return INT_L[k]; }).join(", ")]));
+    put("Pedidos especiales", data.special_requests);
+    put("Contacto de emergencia", [data.emergency_contact.name, data.emergency_contact.relation, data.emergency_contact.phone].filter(Boolean).join(", "));
+    if (!sketch) put("Acuerdo", signed ? "Firmado electrónicamente por " + data.signature_name + " el " + esDate(data.signature_date) + " (versión " + CONFIG.agreement_version + ")" : "Sin firmar: pedir la firma antes del viaje");
+    if (signed) put("Texto del acuerdo firmado", data.agreement);
+    return f;
+  }
+  function submit(data, opts) {
     window.laLastPayload = data;
-    var signed = !!data.agreement, sketch = data.stage === "sketch";
-    var body = {
-      _subject: "Last Antilla · " + (sketch ? "Nueva consulta" : "Detalles" + (signed ? " y acuerdo firmado" : "")) + ": " + (data.lead_name || "sin nombre"),
-      _template: "table", _captcha: "false", _honey: "",
-      "Cliente": data.lead_name, "Correo": data.email, "Teléfono": data.phone, "Prefiere": data.contact_pref,
-      "Etapa": sketch ? "Boceto (aún sin detalles)" : "Detalles completos",
-      "Acuerdo": signed ? "Firmado por " + data.signature_name + " (versión " + CONFIG.agreement_version + ")" : "Sin firmar",
-      "Ficha del anfitrión": htmlToText(hostSheet(data)),
-      "Respuestas": answersText()
-    };
-    if (signed) body["Acuerdo firmado"] = data.agreement;
-    body["Datos (JSON)"] = JSON.stringify(data, null, 2);
-    if (CONFIG.notify_cc.length) body._cc = CONFIG.notify_cc.join(",");
+    var body = emailBody(data);
     if (LOCAL) { console.log("[Last Antilla] submit (local, not sent)", body); window.laLastEmail = body; return Promise.resolve({ ok: true }); }
+    // Form-encoded keeps it a simple request, so it can also go out with keepalive while the page closes.
     return fetch("https://formsubmit.co/ajax/" + encodeURIComponent(CONFIG.notify_to), {
-      method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(body)
+      method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+      body: new URLSearchParams(body).toString(), keepalive: !!(opts && opts.keepalive)
     }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(function (j) { if (j && String(j.success) === "false") throw new Error(j.message || "not sent"); return j; });
+  }
+  // The sketch waits: if the client goes on to the details, one complete email goes at the end.
+  // It goes on its own if they stop there, leave the page or stay on the thank-you screen.
+  var sketchPending = false, sketchTimer = null;
+  function sendSketch(opts) {
+    if (!sketchPending) return Promise.resolve();
+    sketchPending = false; clearTimeout(sketchTimer);
+    return submit(payload("sketch"), opts).catch(function (e) { sketchPending = true; throw e; });
   }
   function sendFailed(box) {
     box.innerHTML = "We couldn’t send it just now. Please try again, or write to us at <a href=\"mailto:" + CONFIG.brand_email + "\">" + CONFIG.brand_email + "</a>.";
@@ -1454,7 +1490,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
     water: { swims: "nada con confianza", edge: "se queda en la orilla", skip: "prefiere no entrar al agua" },
     pr: { first: "primera vez en PR", san_juan: "ya estuvo, sobre todo en San Juan", often: "ha venido varias veces" }
   };
-  function hostSheet(p) {
+  function hostSheet(p, asData) {
     var g = p.adults === 1 && !p.children ? "Viaja solo/a" : p.adults === 2 && !p.children ? (p.guests[0] && p.guests[0].relation === "partner" ? "Pareja" : "Dos adultos") : "Grupo de " + (p.adults + p.children) + (p.children ? " con menores" : "");
     var undecided = !p.stay || /deciding|not sure|undecided|tbd/i.test(p.stay);
     var line = [g, p.home_city ? "de " + p.home_city : "", ES.occasion[p.occasion], p.pace ? "ritmo " + ES.pace[p.pace] : "", ES.pr[p.pr_before], undecided ? "hospedaje por decidir" : "se queda en " + p.stay, "formato: " + ES.format[p.format]].filter(Boolean).join(", ");
@@ -1484,7 +1520,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
     if (p.health_notes) alerts.push("Salud: " + p.health_notes);
     if (p.children) alerts.push("Menores en el grupo: After Dark queda fuera");
     if (p.adults === 1 && !(p.emergency_contact && p.emergency_contact.name)) alerts.push("Adulto solo sin contacto de emergencia: pedirlo");
-    if (!p.signature_name) alerts.push("Acuerdo sin firmar: pedir que lo firme antes del viaje (enlace: lastantillatravel.co/plan.html)");
+    if (p.stage === "details" && !p.signature_name) alerts.push("Acuerdo sin firmar: pedir que lo firme antes del viaje (enlace: lastantillatravel.co/plan.html)");
     if (p.stage === "sketch") alerts.push("Solo envió el boceto: faltan los detalles (mesa, movilidad, salud)");
 
     var done = [];
@@ -1499,7 +1535,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
     if (p.smoke) done.push("Fuma: " + (p.smoke === "yes" ? "sí, planificar paradas" : "no"));
     if (p.photos) done.push("Fotos: " + { yes: "sí", places_only: "solo lugares", no: "no" }[p.photos]);
     if (p.language) done.push("Idioma: " + { en: "inglés", es: "español", both: "ambos" }[p.language]);
-    if (p.contact_pref) done.push("Contacto preferido: " + p.contact_pref + " · " + [p.email, p.phone].filter(Boolean).join(" · "));
+    if (p.contact_pref && !asData) done.push("Contacto preferido: " + p.contact_pref + " · " + [p.email, p.phone].filter(Boolean).join(" · "));
 
     var qs = [];
     if (p.occupation) qs.push("Mencionó su oficio (" + p.occupation + "): ¿hay una conversación, una cocina o un taller que le interese?");
@@ -1534,6 +1570,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
     var j = journeyFor(p.dates_flexible ? p.dates_flexible.days : (p.arrival_date && p.departure_date ? Math.round((new Date(p.departure_date) - new Date(p.arrival_date)) / 864e5) : 0));
     var discard = Object.keys(why).map(function (id) { return DAY[id].name + ": " + why[id]; });
 
+    if (asData) return { line: line, alerts: alerts, grupo: grupo, done: done, qs: qs.slice(0, 5), sug: sug, journey: j ? j.name : "", discard: discard };
     function ul(arr, cls) { return arr.length ? "<ul" + (cls ? ' class="' + cls + '"' : "") + ">" + arr.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" : '<p class="small" style="margin-top:6px">Nada.</p>'; }
     return '<div class="ficha"><p class="label">Ficha del anfitrión · interna</p><h2>' + esc(p.lead_name || "Sin nombre") + "</h2>" +
       '<p class="line">' + esc(line) + "</p>" +
@@ -1647,15 +1684,23 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
       if (!validShape()) return;
       if (returnToReview) { save(); show("d-review"); return; }
       S.stage = "sketch_sent"; S.sketch_sent_at = new Date().toISOString(); save();
-      var btn = this; btn.disabled = true;
-      submit(payload("sketch")).then(function () { show("s-sent"); }, function () { sendFailed($("#shape-err")); }).then(function () { btn.disabled = false; });
+      sketchPending = true; clearTimeout(sketchTimer);
+      sketchTimer = setTimeout(function () { if (current === "s-sent") sendSketch().catch(function () {}); }, 10 * 60 * 1000);
+      show("s-sent");
     });
     ["email", "phone"].forEach(function (id) { $("#" + id).addEventListener("input", function () { S[id] = this.value.trim(); save(); }); });
     $("#contact_pref").addEventListener("change", function () { S.contact_pref = radioVal("contact_pref"); save(); });
 
     // After sending
-    $("#go-details").addEventListener("click", function () { fillDetails(); show(needsParty() ? "d-party" : "d-table"); });
-    $("#no-details").addEventListener("click", function () { clearDraft(); $("#done-line").textContent = "Your host will be in touch shortly to plan the days with you. If something comes to mind before then, simply tell them on the call."; show("s-done"); });
+    $("#go-details").addEventListener("click", function () { clearTimeout(sketchTimer); fillDetails(); show(needsParty() ? "d-party" : "d-table"); });
+    function leaving() { if (sketchPending) sendSketch({ keepalive: true }).catch(function () {}); }
+    window.addEventListener("pagehide", leaving);
+    document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") leaving(); });
+    $("#no-details").addEventListener("click", function () {
+      var btn = this; btn.disabled = true; $("#sent-err").hidden = true;
+      sendSketch().then(function () { done(); }, function () { sendFailed($("#sent-err")); }).then(function () { btn.disabled = false; });
+    });
+    function done() { clearDraft(); $("#done-line").textContent = "Your host will be in touch shortly to plan the days with you. If something comes to mind before then, simply tell them on the call."; show("s-done"); }
     $("#okay").addEventListener("click", function () { returnToReview = false; if (CONFIG.legal_ready) show("d-doc"); else finish(false); });
     if (!CONFIG.legal_ready) { $("#okay").textContent = "Send the details"; $("#review-sub").textContent = "Change anything you like, then send it to your host."; }
     $("#doc-edit").addEventListener("click", function () { if (hist[hist.length - 1] === "d-review") hist.pop(); show("d-review", { back: true }); });
@@ -1670,13 +1715,13 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
         var box = $("#doc-err"); box.textContent = err; box.hidden = !err; if (err) return;
       } else S.consents = { read: false, accurate: false };
       S.stage = "details"; S.details_sent_at = new Date().toISOString();
-      var data = payload("details");
-      if (signed) { renderDoc(); data.agreement = htmlToText($("#doc").innerHTML) + "\n\nSigned electronically by " + S.signature_name + " on " + new Date().toISOString() + ". Version " + CONFIG.agreement_version + "."; }
+      var data = payload("details"), wasPending = sketchPending; sketchPending = false; clearTimeout(sketchTimer);
+      if (signed) { renderDoc(); data.agreement = htmlToText($("#doc").innerHTML).replace(/\n(\d+\. )/g, "\n\n$1") + "\n\nSigned electronically by " + S.signature_name + " on " + new Date().toISOString() + ". Version " + CONFIG.agreement_version + "."; }
       submit(data).then(function () {
         clearDraft(); S.stage = "done";
         $("#done-line").textContent = signed || !CONFIG.legal_ready ? "Your details are with your host. The call can be all about the days now." : "Your details are with your host. They will send you the agreement to sign before the trip.";
         show("s-done");
-      }, function () { sendFailed(CONFIG.legal_ready ? $("#doc-err") : $("#review-err")); });
+      }, function () { sketchPending = wasPending; sendFailed(CONFIG.legal_ready ? $("#doc-err") : $("#review-err")); });
     }
     $("#send-full").addEventListener("click", function () { finish(true); });
     $("#sign-later").addEventListener("click", function () { finish(false); });
