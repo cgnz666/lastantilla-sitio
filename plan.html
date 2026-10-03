@@ -1307,54 +1307,143 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
     $$("button", d).forEach(function (b) { b.remove(); });
     return d.textContent.replace(/: \n/g, "\n").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
   }
-  // One email per client, in short sections a host can scan. FormSubmit lays each field out as a table row.
+  // One short email per client, with a PDF attached: the host sheet, the client's answers and the signed agreement.
+  // FormSubmit lays each field out as a table row and turns spaces in field names into "_", so names are one word.
   var ES_PREF = { whatsapp: "WhatsApp", text: "mensaje de texto", email: "correo", call: "llamada" };
   var ES_HEARD = { concierge: "un concierge", advisor: "un asesor de viajes", instagram: "Instagram", search: "una búsqueda", referral: "una amistad", other: "otro medio" };
   var ES_PLANNER = { ourselves: "ellos mismos", advisor: "un asesor de viajes", assistant: "un asistente", concierge: "un concierge" };
   var ES_LANG = { en: "inglés", es: "español", both: "inglés y español" };
   function esDate(iso) { var d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.toLocaleDateString("es-PR", { day: "numeric", month: "long", year: "numeric" }); }
   function bullets(arr) { return arr.filter(Boolean).map(function (x) { return "• " + x; }).join("\n"); }
-  function emailBody(data) {
-    var sh = hostSheet(data, true), signed = !!data.agreement, sketch = data.stage === "sketch", f = {};
+  function report(data) {
+    var sh = hostSheet(data, true), signed = !!data.agreement, sketch = data.stage === "sketch";
+    var r = {
+      name: data.lead_name || "Sin nombre", signed: signed, sketch: sketch, line: sh.line,
+      estado: sketch ? "Envió el boceto y no completó los detalles" : "Completó los detalles" + (signed ? " y firmó el acuerdo" : ", sin firmar el acuerdo"),
+      contacto: [data.email, data.phone].filter(Boolean).join(" · ") + " · prefiere " + (ES_PREF[data.contact_pref] || data.contact_pref),
+      fechas: data.arrival_date ? esDate(data.arrival_date) + (data.departure_date ? " al " + esDate(data.departure_date) : "") :
+        data.dates_flexible ? "Sin fechas todavía: piensa en " + (data.dates_flexible.month === "undecided" ? "algún momento pronto" : new Date(data.dates_flexible.month + "-15T12:00:00").toLocaleDateString("es-PR", { month: "long", year: "numeric" })) + ", unos " + data.dates_flexible.days + " días" : "Sin fechas",
+      alerts: sh.alerts, grupo: sh.grupo, qs: sh.qs, done: sh.done, sug: sh.sug, journey: sh.journey,
+      marcados: (data.days_of_interest || []).map(function (id) { return DAY[id].name; }),
+      cliente: [data.home_city && "Viene de: " + data.home_city, data.occupation && "Oficio: " + data.occupation,
+        data.pr_before && "Puerto Rico: " + ES.pr[data.pr_before], data.pr_roots === "yes" && "Raíces en la isla" + (data.roots_town ? ": " + data.roots_town : ""),
+        data.language && "Idioma: " + ES_LANG[data.language], data.best_trip && "Su mejor viaje: " + data.best_trip,
+        data.celebrations && "Fechas especiales: " + data.celebrations, data.not_wanted && "No quiere: " + data.not_wanted,
+        data.other_stops && "Viaje más largo: " + data.other_stops, data.planner && "Planifica: " + ES_PLANNER[data.planner],
+        data.heard_from && "Nos conoció por " + ES_HEARD[data.heard_from], data.interests.length && "Le interesa: " + data.interests.map(function (k) { return INT_L[k]; }).join(", "),
+        data.remember && "Quiere llevarse de recuerdo: " + data.remember, data.special_requests && "Pedidos especiales: " + data.special_requests].filter(Boolean),
+      emergencia: [data.emergency_contact.name, data.emergency_contact.relation, data.emergency_contact.phone].filter(Boolean).join(", "),
+      acuerdo: sketch ? "" : signed ? "Firmado electrónicamente por " + data.signature_name + " el " + esDate(data.signature_date) + " (versión " + CONFIG.agreement_version + ")" : "Sin firmar: pedir la firma antes del viaje",
+      agreementText: data.agreement || ""
+    };
+    return r;
+  }
+  function emailBody(data, withPdf) {
+    var r = report(data), f = {};
     function put(k, v) { if (v && String(v).trim()) f[k] = String(v).trim(); }
-    f._subject = "Last Antilla · Nueva consulta" + (sketch ? " (solo el boceto)" : signed ? " · acuerdo firmado" : "") + ": " + (data.lead_name || "sin nombre");
+    f._subject = "Last Antilla · Nueva consulta" + (r.sketch ? " (solo el boceto)" : r.signed ? " · acuerdo firmado" : "") + ": " + r.name;
     f._template = "table"; f._captcha = "false"; f._honey = "";
     if (CONFIG.notify_cc.length) f._cc = CONFIG.notify_cc.join(",");
-    put("Resumen", sh.line);
-    put("Estado", sketch ? "Envió el boceto y no completó los detalles" : "Completó los detalles" + (signed ? " y firmó el acuerdo" : ", sin firmar el acuerdo"));
-    put("Contacto", [data.email, data.phone].filter(Boolean).join("  ·  ") + "\nPrefiere: " + (ES_PREF[data.contact_pref] || data.contact_pref));
-    put("Fechas", data.arrival_date ? esDate(data.arrival_date) + (data.departure_date ? " al " + esDate(data.departure_date) : "") :
-      data.dates_flexible ? "Sin fechas todavía: piensa en " + (data.dates_flexible.month === "undecided" ? "algún momento pronto" : new Date(data.dates_flexible.month + "-15T12:00:00").toLocaleDateString("es-PR", { month: "long", year: "numeric" })) + ", unos " + data.dates_flexible.days + " días" : "");
-    put("Alertas", bullets(sh.alerts));
-    put("Grupo", bullets(sh.grupo));
-    put("Días que marcó", bullets((data.days_of_interest || []).map(function (id) { return DAY[id].name; })));
-    put("Días sugeridos", bullets(sh.sug) + (sh.journey ? "\nViaje que encaja: " + sh.journey : ""));
-    put("Para la llamada", bullets(sh.qs));
-    put("Quiere llevarse de recuerdo", data.remember);
-    put("Logística resuelta", bullets(sh.done));
-    put("Sobre el cliente", bullets([
-      data.home_city && "Viene de: " + data.home_city, data.occupation && "Oficio: " + data.occupation,
-      data.pr_before && "Puerto Rico: " + ES.pr[data.pr_before], data.pr_roots === "yes" && "Raíces en la isla" + (data.roots_town ? ": " + data.roots_town : ""),
-      data.language && "Idioma: " + ES_LANG[data.language], data.best_trip && "Su mejor viaje: " + data.best_trip,
-      data.celebrations && "Fechas especiales: " + data.celebrations, data.not_wanted && "No quiere: " + data.not_wanted,
-      data.other_stops && "Viaje más largo: " + data.other_stops, data.planner && "Planifica: " + ES_PLANNER[data.planner],
-      data.heard_from && "Nos conoció por " + ES_HEARD[data.heard_from], data.interests.length && "Le interesa: " + data.interests.map(function (k) { return INT_L[k]; }).join(", ")]));
-    put("Pedidos especiales", data.special_requests);
-    put("Contacto de emergencia", [data.emergency_contact.name, data.emergency_contact.relation, data.emergency_contact.phone].filter(Boolean).join(", "));
-    if (!sketch) put("Acuerdo", signed ? "Firmado electrónicamente por " + data.signature_name + " el " + esDate(data.signature_date) + " (versión " + CONFIG.agreement_version + ")" : "Sin firmar: pedir la firma antes del viaje");
-    if (signed) put("Texto del acuerdo firmado", data.agreement);
+    put("Resumen", r.line);
+    put("Estado", r.estado);
+    put("Contacto", r.contacto);
+    put("Fechas", r.fechas);
+    put("Alertas", bullets(r.alerts));
+    put("Días", r.marcados.join(", "));
+    put("Acuerdo", r.acuerdo);
+    if (withPdf) put("Documento", "Todo lo demás va en el PDF adjunto: ficha, días sugeridos, preguntas para la llamada" + (r.signed ? " y el acuerdo firmado" : "") + ".");
+    else {
+      put("Grupo", bullets(r.grupo)); put("Llamada", bullets(r.qs)); put("Cliente", bullets(r.cliente)); put("Emergencia", r.emergencia);
+      if (r.signed) put("Texto", r.agreementText);
+    }
     return f;
   }
+
+  // The PDF is drawn with jsPDF (assets/vendor), loaded only when it's needed.
+  var pdfLib = null;
+  function loadPdfLib() {
+    if (pdfLib) return pdfLib;
+    pdfLib = new Promise(function (ok, fail) {
+      if (window.jspdf) return ok(window.jspdf);
+      var sc = document.createElement("script"); sc.src = "assets/vendor/jspdf.umd.min.js";
+      sc.onload = function () { window.jspdf ? ok(window.jspdf) : fail(new Error("jsPDF")); };
+      sc.onerror = function () { pdfLib = null; fail(new Error("jsPDF")); };
+      document.head.appendChild(sc);
+    });
+    return pdfLib;
+  }
+  function buildPdf(data) {
+    return loadPdfLib().then(function (lib) {
+      var r = report(data), doc = new lib.jsPDF({ unit: "pt", format: "letter" });
+      var W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 56, y = M, TW = W - 2 * M;
+      var SAGE = [79, 96, 74], INK = [37, 42, 38], MUTED = [90, 97, 89], RULE = [208, 206, 194], ALERT = [142, 59, 47];
+      function room(h) { if (y + h > H - M) { doc.addPage(); y = M; } }
+      function text(str, opts) {
+        opts = opts || {};
+        doc.setFont("helvetica", opts.bold ? "bold" : "normal"); doc.setFontSize(opts.size || 10.5); doc.setTextColor.apply(doc, opts.color || INK);
+        var indent = opts.indent || 0, lh = (opts.size || 10.5) * 1.42;
+        doc.splitTextToSize(String(str), TW - indent).forEach(function (ln, k) {
+          room(lh); if (opts.bullet && k === 0) { doc.text("•", M + indent - 11, y); }
+          doc.text(ln, M + indent, y); y += lh;
+        });
+      }
+      function section(title, items, opts) {
+        items = (items || []).filter(Boolean); if (!items.length) return;
+        opts = opts || {};
+        room(44); y += 12;
+        doc.setDrawColor.apply(doc, RULE); doc.setLineWidth(0.6); doc.line(M, y - 14, W - M, y - 14);
+        text(title.toUpperCase(), { size: 8.5, bold: true, color: opts.alert ? ALERT : SAGE }); y += 2;
+        items.forEach(function (it) { text(it, { indent: items.length > 1 || opts.list ? 12 : 0, bullet: items.length > 1 || opts.list, color: opts.alert ? ALERT : INK }); });
+      }
+      // Header
+      doc.setFillColor.apply(doc, SAGE); doc.rect(0, 0, W, 6, "F");
+      text("LAST ANTILLA TRAVEL CO.", { size: 8.5, bold: true, color: SAGE }); y += 6;
+      text("Consulta: " + r.name, { size: 20, bold: true }); y += 2;
+      text(r.estado + " · recibida el " + esDate(new Date().toISOString().slice(0, 10)), { size: 9.5, color: MUTED }); y += 4;
+      text(r.line, { size: 11.5 });
+      section("Contacto", [r.contacto]);
+      section("Fechas", [r.fechas]);
+      section("Alertas", r.alerts, { alert: true, list: true });
+      section("Grupo", r.grupo, { list: true });
+      section("Días que marcó", r.marcados, { list: true });
+      section("Días sugeridos", r.sug.concat(r.journey ? ["Viaje que encaja: " + r.journey] : []), { list: true });
+      section("Para la llamada", r.qs, { list: true });
+      section("Logística resuelta", r.done, { list: true });
+      section("Sobre el cliente", r.cliente, { list: true });
+      section("Contacto de emergencia", [r.emergencia]);
+      section("Acuerdo", [r.acuerdo]);
+      if (r.signed) {
+        doc.addPage(); y = M;
+        doc.setFillColor.apply(doc, SAGE); doc.rect(0, 0, W, 6, "F");
+        r.agreementText.split(/\n/).forEach(function (ln) {
+          if (!ln.trim()) { y += 6; return; }
+          if (/^Guest Information/.test(ln)) text(ln, { size: 15, bold: true });
+          else if (/^\d+\. /.test(ln)) { y += 4; text(ln, { size: 10.5, bold: true, color: SAGE }); }
+          else text(ln.replace(/^· /, "• "), { size: 9.5 });
+        });
+      }
+      var n = doc.getNumberOfPages();
+      for (var k = 1; k <= n; k++) { doc.setPage(k); doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor.apply(doc, MUTED); doc.text("Last Antilla Travel Co. · " + r.name + " · " + k + " / " + n, M, H - 28); }
+      return doc.output("blob");
+    });
+  }
+  function pdfName(data) { return "Consulta-" + (data.lead_name || "cliente").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w]+/g, "-").replace(/^-|-$/g, "") + ".pdf"; }
+
   function submit(data, opts) {
     window.laLastPayload = data;
-    var body = emailBody(data);
-    if (LOCAL) { console.log("[Last Antilla] submit (local, not sent)", body); window.laLastEmail = body; return Promise.resolve({ ok: true }); }
-    // Form-encoded keeps it a simple request, so it can also go out with keepalive while the page closes.
-    return fetch("https://formsubmit.co/ajax/" + encodeURIComponent(CONFIG.notify_to), {
-      method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
-      body: new URLSearchParams(body).toString(), keepalive: !!(opts && opts.keepalive)
-    }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-      .then(function (j) { if (j && String(j.success) === "false") throw new Error(j.message || "not sent"); return j; });
+    var keepalive = !!(opts && opts.keepalive);
+    // Leaving the page: no time for the PDF, so the short email goes on its own with the essentials.
+    var pdf = keepalive ? Promise.resolve(null) : buildPdf(data).catch(function () { return null; });
+    return pdf.then(function (blob) {
+      var body = emailBody(data, !!blob);
+      if (LOCAL) { console.log("[Last Antilla] submit (local, not sent)", body); window.laLastEmail = body; window.laLastPdf = blob; return { ok: true }; }
+      var fd = new FormData();
+      Object.keys(body).forEach(function (k) { fd.append(k, body[k]); });
+      if (blob) fd.append("attachment", blob, pdfName(data));
+      return fetch("https://formsubmit.co/ajax/" + encodeURIComponent(CONFIG.notify_to), { method: "POST", headers: { Accept: "application/json" }, body: fd, keepalive: keepalive })
+        .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+        .then(function (j) { if (j && String(j.success) === "false") throw new Error(j.message || "not sent"); return j; });
+    });
   }
   // The sketch waits: if the client goes on to the details, one complete email goes at the end.
   // It goes on its own if they stop there, leave the page or stay on the thank-you screen.
@@ -1524,7 +1613,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
     if (p.stage === "sketch") alerts.push("Solo envió el boceto: faltan los detalles (mesa, movilidad, salud)");
 
     var done = [];
-    if (p.arrival_date) done.push("Fechas: " + p.arrival_date + " a " + p.departure_date);
+    if (p.arrival_date) done.push("Fechas: " + esDate(p.arrival_date) + (p.departure_date ? " al " + esDate(p.departure_date) : ""));
     if (p.diet.length) done.push("Comida: " + p.diet.map(function (c) { return DIET_L[c]; }).join(", ") + (p.diet_exceptions.length ? " (excepciones: " + p.diet_exceptions.map(function (e) { return personName(e.guest) + " " + DIET_L[e.code]; }).join("; ") + ")" : ""));
     if (p.dining_style) done.push("Mesa: " + { chefs_table: "chef's table", where_locals_eat: "donde come la gente de aquí", both: "un poco de ambos" }[p.dining_style]);
     if (walkVals.length) done.push("Caminar: " + walkVals.map(function (w) { return ES.walk[w]; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).join(" / "));
@@ -1686,7 +1775,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
       S.stage = "sketch_sent"; S.sketch_sent_at = new Date().toISOString(); save();
       sketchPending = true; clearTimeout(sketchTimer);
       sketchTimer = setTimeout(function () { if (current === "s-sent") sendSketch().catch(function () {}); }, 10 * 60 * 1000);
-      show("s-sent");
+      show("s-sent"); loadPdfLib().catch(function () {});
     });
     ["email", "phone"].forEach(function (id) { $("#" + id).addEventListener("input", function () { S[id] = this.value.trim(); save(); }); });
     $("#contact_pref").addEventListener("change", function () { S.contact_pref = radioVal("contact_pref"); save(); });
