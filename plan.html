@@ -1,0 +1,1711 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan your days · Last Antilla Travel Co.</title>
+<meta name="description" content="Sketch your days in Puerto Rico: four quick choices and a short note, and your host takes it from there.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,400;0,500;1,400&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<!--
+  Last Antilla · Plan your days. Two parts: a quick sketch sent right away, then optional details,
+  a review and the agreement. Each submission is emailed through FormSubmit (CONFIG.notify_to, with CONFIG.notify_cc in copy).
+  Host mode (?host=1) only works on localhost.
+-->
+<style>
+:root{
+  --bg:#F0EEE7;--surface:#E5E2D8;--card:#F7F6F1;--ink:#252A26;--muted:#5A6159;--rule:#D0CEC2;
+  --accent:#4F604A;--accent-ink:#F7F6F1;--band:#4A5845;--band-ink:#F2F1EA;
+  --support:#8A7B5F;--alert:#8E3B2F;--alert-bg:#F3E3DD;--mark:#E2E6D6;--on-photo:#F7F3EC;--shade:22,26,22;
+  --display:"Jost","Futura","Century Gothic","Helvetica Neue",Arial,sans-serif;
+  --body:"Hanken Grotesk","Helvetica Neue",Arial,sans-serif;
+  --gutter:16px;color-scheme:light;
+}
+@media (min-width:600px){:root{--gutter:32px}}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#171A17;--surface:#20241F;--card:#1C201C;--ink:#ECEDE6;--muted:#ABB2A8;--rule:#343A33;
+  --accent:#A9BA9F;--accent-ink:#171A17;--band:#2E382C;--band-ink:#ECEDE6;
+  --support:#C8B694;--alert:#E8A797;--alert-bg:#3A2420;--mark:#2F3A2C;--shade:12,14,12;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#171A17;--surface:#20241F;--card:#1C201C;--ink:#ECEDE6;--muted:#ABB2A8;--rule:#343A33;
+  --accent:#A9BA9F;--accent-ink:#171A17;--band:#2E382C;--band-ink:#ECEDE6;
+  --support:#C8B694;--alert:#E8A797;--alert-bg:#3A2420;--mark:#2F3A2C;--shade:12,14,12;color-scheme:dark}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;margin:0;-webkit-font-smoothing:antialiased;overflow-x:hidden;min-height:100svh;display:flex;flex-direction:column}
+img{display:block;max-width:100%}
+h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance;letter-spacing:-.005em}
+p{margin:0}
+a{color:var(--accent);text-underline-offset:3px;text-decoration-thickness:1px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+[hidden]{display:none !important}
+.label{font-size:.72rem;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);line-height:1.5}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.small{font-size:.9rem;color:var(--muted)}
+
+/* Progress strip under the site header */
+.formbar{position:sticky;top:var(--head-h);z-index:30;background:var(--bg)}
+.formbar .in{display:flex;justify-content:flex-end;align-items:center;min-height:30px;padding-inline:var(--gutter);max-width:1100px;margin:0 auto}
+.progress{position:absolute;left:0;bottom:0;height:2px;width:100%}
+.progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .5s ease}
+.step-note{font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.formbar.off{display:none}
+
+/* Undo the site's general form styles where this page needs its own */
+.blank{width:auto;min-height:0;box-shadow:none !important;transition:border-color .2s}
+input[type=date].blank{min-height:0}
+.field input,.field select,.field textarea{box-shadow:none}
+.field label,.field .flabel,.field legend{letter-spacing:normal;text-transform:none;color:var(--ink);font-size:.95rem}
+.chips label{font-size:1rem;color:var(--ink)}
+.chips input{width:auto;height:auto}
+.chips input:checked+span{box-shadow:none}
+.chips label:hover span{border-color:var(--muted)}
+.check input{width:22px;min-height:0;padding:0}
+main .btn{white-space:normal;text-align:center}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:12px 26px;font:500 .78rem/1 var(--body);letter-spacing:.18em;text-transform:uppercase;text-decoration:none;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer;transition:background-color .2s,color .2s}
+.btn:hover{background:transparent;color:var(--accent)}
+.btn-line{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn-line:hover{background:var(--ink);color:var(--bg)}
+.link{background:none;border:0;padding:10px 2px;min-height:44px;font:inherit;font-size:.95rem;color:var(--accent);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;cursor:pointer}
+.link.quiet{color:var(--muted)}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;margin-top:32px}
+.actions .grow{flex:1}
+.back{background:none;border:0;min-height:44px;padding:10px 0;font:500 .74rem/1 var(--body);letter-spacing:.18em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+.back::before{content:"← "}
+.back:hover{color:var(--ink)}
+
+/* Screens */
+main{flex:1}
+.screen{padding:clamp(28px,6vw,64px) var(--gutter) 72px;animation:rise .45s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.screen,.sketch li,.pic{animation:none !important;transition:none !important}}
+.col{max-width:640px;margin:0 auto}
+.col.wide{max-width:980px}
+.screen h1[tabindex="-1"]:focus,.screen h2[tabindex="-1"]:focus{outline:none}
+.screen h1{font-size:clamp(2.3rem,7vw,3.8rem);line-height:1.02;margin-top:14px}
+.screen h2{font-size:clamp(1.8rem,5.4vw,2.6rem);line-height:1.08;margin-top:12px}
+.screen .sub{margin-top:14px;color:var(--muted);max-width:52ch}
+
+/* Welcome */
+.welcome{display:grid;gap:28px}
+.welcome figure{margin:0;aspect-ratio:16/10;overflow:hidden;background:var(--surface)}
+.welcome figure img{width:100%;height:100%;object-fit:cover;object-position:50% 60%}
+.welcome .lede{font-size:1.1rem;max-width:44ch;margin-top:16px}
+@media (min-width:860px){.welcome{grid-template-columns:1.05fr 1fr;align-items:center}.welcome figure{aspect-ratio:4/5}}
+
+/* This or that */
+.pick-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px}
+.dots{display:flex;gap:6px}
+.dots i{width:22px;height:2px;background:var(--rule);transition:background .3s}
+.dots i.on{background:var(--accent)}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}
+@media (min-width:700px){.duo{gap:18px}}
+.pic{position:relative;display:block;width:100%;padding:0;border:0;background:rgb(var(--shade));cursor:pointer;aspect-ratio:3/4;overflow:hidden;color:var(--on-photo);text-align:left;font:inherit;transition:transform .3s ease,opacity .3s ease}
+@media (min-width:700px){.pic{aspect-ratio:4/5}}
+.pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .8s ease}
+.pic::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(var(--shade),0) 45%,rgba(var(--shade),.78) 100%);transition:background .3s}
+.pic:hover img{transform:scale(1.035)}
+.pic .cap{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:14px;font-family:var(--display);font-size:clamp(1.1rem,3.6vw,1.6rem);line-height:1.15;text-shadow:0 1px 14px rgba(var(--shade),.5)}
+.pic .tick{position:absolute;top:12px;right:12px;z-index:1;width:34px;height:34px;border-radius:50%;border:1px solid var(--on-photo);display:grid;place-items:center;font-size:1rem;opacity:0;transform:scale(.6);transition:opacity .25s,transform .25s;background:rgba(var(--shade),.3)}
+.pic.on .tick{opacity:1;transform:none}
+.pic.on{transform:scale(1.015)}
+.duo.decided .pic:not(.on){opacity:.45}
+.pick-foot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:12px}
+
+/* The letter */
+.letter{margin-top:26px;background:var(--card);border:1px solid var(--rule);padding:clamp(22px,5vw,44px);font-family:var(--display);font-size:clamp(1.18rem,3.8vw,1.5rem);line-height:2.05}
+.letter p+p{margin-top:12px}
+.blank{font:inherit;color:var(--accent);background:transparent;border:0;border-bottom:1px solid var(--muted);border-radius:0;padding:0 2px;margin:0 1px;min-width:3ch;max-width:100%;line-height:1.35;vertical-align:baseline;-webkit-appearance:none;appearance:none;transition:border-color .2s}
+.blank:focus{outline:none;border-bottom:2px solid var(--accent)}
+.blank:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.blank::placeholder{color:var(--muted);opacity:.75}
+select.blank{cursor:pointer;padding-right:16px;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:right 5px bottom .55em,right 1px bottom .55em;background-size:4px 4px,4px 4px;background-repeat:no-repeat}
+select.blank option{color:#252A26;background:#F7F6F1;font-family:var(--body);font-size:1rem}
+input.blank.num{width:2.6ch;text-align:center;-moz-appearance:textfield}
+input.blank.num::-webkit-inner-spin-button,input.blank.num::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type=date].blank{width:auto;min-width:9.5em;font-size:.86em}
+.blank.free{display:inline;white-space:pre-wrap;word-break:break-word;cursor:text;padding:0 4px;min-width:6ch;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.blank.free:focus,.blank.free:focus-visible{outline:none;border-bottom:2px solid var(--accent);background:var(--mark)}
+.nw{white-space:nowrap}
+.blank.free:empty::before{content:attr(data-ph);color:var(--muted);opacity:.75}
+.aside{font:inherit;font-family:var(--body);font-size:.85rem;background:none;border:0;padding:8px 2px;min-height:44px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer;vertical-align:baseline}
+.blank.bad{border-bottom-color:var(--alert)}
+.err{color:var(--alert);font-size:.95rem;margin-top:14px}
+.echo{font-family:var(--body);font-size:.9rem;color:var(--muted);margin-top:16px;line-height:1.5}
+
+/* Taking shape */
+.sketch{list-style:none;margin:24px 0 0;padding:0;display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:600px){.sketch{grid-template-columns:repeat(3,1fr)}}
+.sketch li{animation:rise .5s ease both}
+.sketch li:nth-child(2){animation-delay:.12s}.sketch li:nth-child(3){animation-delay:.24s}.sketch li:nth-child(n+4){animation-delay:.05s}
+.daycard{position:relative;display:grid;grid-template-columns:104px 1fr;gap:0;width:100%;padding:0;background:var(--card);border:1px solid var(--rule);text-align:left;font:inherit;color:inherit;cursor:pointer;transition:border-color .2s,opacity .2s;min-height:104px}
+@media (min-width:600px){.daycard{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.daycard img{width:100%;height:100%;object-fit:cover;aspect-ratio:1}
+@media (min-width:600px){.daycard img{aspect-ratio:4/3;height:auto}}
+.daycard .t{padding:12px 14px 14px}
+.daycard .t b{display:block;font-family:var(--display);font-weight:400;font-size:1.12rem;line-height:1.2}
+.daycard .t span{display:block;font-size:.9rem;color:var(--muted);margin-top:4px;line-height:1.45}
+.daycard .keep{position:absolute;top:8px;left:8px;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:.9rem;transition:transform .2s,background .2s}
+.daycard[aria-pressed="false"]{opacity:.55;border-style:dashed}
+.daycard[aria-pressed="false"] .keep{background:rgba(var(--shade),.55);color:var(--on-photo);transform:scale(.9)}
+.daycard[aria-pressed="false"] .keep::before{content:"+"}
+.daycard[aria-pressed="true"] .keep::before{content:"✓"}
+.daycard[aria-pressed="true"]{border-color:var(--accent)}
+.journey-hint{margin-top:18px;padding:14px 16px;border-left:2px solid var(--accent);background:var(--card);font-size:.98rem}
+.journey-hint b{font-weight:600}
+
+/* Fields */
+fieldset{border:0;margin:0;padding:0;min-width:0}
+.block{margin-top:30px}
+.block>legend,.qlabel{font-family:var(--display);font-size:1.22rem;line-height:1.3;padding:0;margin-bottom:6px;display:block}
+.why{font-size:.92rem;color:var(--muted);margin-bottom:12px;line-height:1.5}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips label{position:relative;display:inline-flex}
+.chips input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.chips span{display:inline-flex;align-items:center;min-height:44px;padding:10px 16px;border:1px solid var(--rule);background:var(--card);font-size:1rem;line-height:1.25;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.chips span small{color:var(--muted);margin-left:6px;font-size:.85rem}
+.chips input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chips input:checked+span small{color:inherit;opacity:.85}
+.chips input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.chips.stack{flex-direction:column;align-items:stretch}
+.chips.stack label{display:flex}
+.chips.stack span{width:100%}
+.field{display:grid;gap:6px;margin-top:16px}
+.field label,.field .flabel{font-size:.95rem;font-weight:500}
+.field input,.field select,.field textarea{font:inherit;font-size:1rem;color:var(--ink);background:var(--card);border:1px solid var(--rule);border-radius:0;padding:11px 12px;min-height:48px;width:100%}
+.field textarea{min-height:110px;resize:vertical;line-height:1.5}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
+.row2{display:grid;gap:0 14px}
+@media (min-width:600px){.row2{grid-template-columns:1fr 1fr}}
+.check{display:flex;gap:12px;align-items:flex-start;margin-top:14px;font-size:1rem;line-height:1.5;cursor:pointer}
+.check input{width:22px;height:22px;margin:2px 0 0;flex:none;accent-color:var(--accent)}
+.person{border-top:1px solid var(--rule);padding-top:16px;margin-top:18px}
+.person:first-of-type{border-top:0;padding-top:0}
+.person h3{font-size:1.1rem}
+.cond{margin-top:14px;padding:14px 16px;border-left:2px solid var(--support);background:var(--card)}
+.foot-note{margin-top:24px;font-size:.95rem;color:var(--muted);border-top:1px solid var(--rule);padding-top:14px}
+.exc{margin-top:12px}
+.exc .who{font-size:.92rem;color:var(--muted);margin:10px 0 6px}
+
+/* Sent / done */
+.offer{margin-top:36px;padding:clamp(22px,5vw,36px);background:var(--band);color:var(--band-ink)}
+.offer h3{font-size:clamp(1.4rem,4.4vw,1.8rem);line-height:1.2}
+.offer p{margin-top:10px;max-width:50ch}
+.offer .small{color:var(--band-ink);opacity:.8}
+.offer .btn{background:var(--band-ink);border-color:var(--band-ink);color:var(--band)}
+.offer .btn:hover{background:transparent;color:var(--band-ink)}
+.offer .btn-line{background:transparent;color:var(--band-ink);border-color:var(--band-ink)}
+.offer .btn-line:hover{background:var(--band-ink);color:var(--band)}
+
+/* Review */
+.rev{margin-top:24px;border-top:1px solid var(--rule)}
+.rev section{border-bottom:1px solid var(--rule);padding:16px 0}
+.rev .h{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.rev h3{font-size:1.15rem}
+.rev dl{display:grid;grid-template-columns:minmax(110px,38%) 1fr;gap:6px 14px;margin:10px 0 0;font-size:.97rem}
+.rev dt{color:var(--muted)}
+.rev dd{margin:0;word-break:break-word}
+.rev .none{color:var(--muted);font-size:.95rem;margin-top:6px}
+
+/* Legal document */
+.draft-flag{display:inline-block;margin-bottom:14px;padding:4px 10px;border:1px solid var(--alert);color:var(--alert);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase}
+.doc{margin-top:22px;background:var(--card);border:1px solid var(--rule);padding:clamp(20px,5vw,48px);font-size:1rem;line-height:1.6}
+.doc h3{font-size:1.5rem;line-height:1.2}
+.doc h4{font-family:var(--display);font-weight:500;font-size:1.05rem;margin:22px 0 6px;letter-spacing:.02em}
+.doc p+p{margin-top:8px}
+.doc table{width:100%;border-collapse:collapse;margin-top:8px;font-size:.95rem}
+.doc th,.doc td{text-align:left;vertical-align:top;border-bottom:1px solid var(--rule);padding:7px 8px 7px 0}
+.doc th{font-weight:500;color:var(--muted);width:36%}
+.doc mark.v{background:var(--mark);color:inherit;padding:0 3px;border-bottom:1px solid var(--accent)}
+.doc .ph{font-family:ui-monospace,Menlo,monospace;font-size:.88em;color:var(--alert)}
+.doc ul{margin:6px 0 0;padding-left:20px}
+.sign{margin-top:22px}
+
+/* Host mode */
+.hostbar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--ink);color:var(--bg);padding:8px var(--gutter);display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.8rem}
+.hostbar b{letter-spacing:.14em;text-transform:uppercase;font-size:.7rem;margin-right:6px}
+.hostbar button{font:inherit;background:transparent;color:inherit;border:1px solid currentColor;padding:6px 10px;min-height:36px;cursor:pointer}
+.hostpanel{position:fixed;inset:0 0 52px 0;z-index:39;background:var(--bg);overflow:auto;padding:24px var(--gutter) 48px}
+.hostpanel .col{max-width:860px}
+.ficha h2{font-size:1.8rem}
+.ficha h3{font-size:1.15rem;margin-top:22px;padding-bottom:4px;border-bottom:1px solid var(--rule)}
+.ficha ul{margin:8px 0 0;padding-left:20px}
+.ficha .alerts li{color:var(--alert)}
+.ficha .alerts{background:var(--alert-bg);padding:12px 12px 12px 30px;margin-top:10px}
+.ficha .line{font-size:1.15rem;margin-top:10px;font-family:var(--display)}
+.ficha pre{white-space:pre-wrap;word-break:break-word;background:var(--card);border:1px solid var(--rule);padding:14px;font-size:.8rem}
+
+@media print{
+  @page{size:letter;margin:.6in}
+  body{background:#fff;color:#000;font-size:11pt;display:block}
+  .site-head,.site-foot,.formbar,.hostbar,.hostpanel,.screen:not(#d-doc),#d-doc .no-print,.draft-flag{display:none !important}
+  #d-doc{padding:0;animation:none}
+  .doc{border:0;padding:0;background:#fff}
+  .doc mark.v{background:none;border:0;padding:0;color:#000}
+  .doc th,.doc td{border-color:#999}
+  .doc h4{break-after:avoid}
+  .doc table,.doc p{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="index.html">Last Antilla <small>Travel Co.</small></a>
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav"><span class="bars" aria-hidden="true"><i></i><i></i><i></i></span><span class="menu-label">Menu</span></button>
+    <nav class="nav" id="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="days.html">The Days</a></li>
+        <li><a href="journeys.html">Journeys</a></li>
+        <li><a href="how-it-works.html">How It Works</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+      </ul>
+      <a class="btn btn-line" href="plan.html" aria-current="page">Plan your days</a>
+    </nav>
+  </div>
+</header>
+<div class="formbar off" id="formbar">
+  <div class="in"><span class="step-note" id="step-note" aria-live="polite"></span></div>
+  <div class="progress" aria-hidden="true"><i id="bar"></i></div>
+</div>
+
+<main id="app">
+
+  <!-- 0 · Welcome -->
+  <section class="screen" id="s-welcome" aria-labelledby="w-title">
+    <div class="col wide welcome">
+      <figure><img src="img/columpio-mar.jpg" alt="A wooden swing hanging from a tree over a calm Caribbean bay"></figure>
+      <div>
+        <p class="label">Plan your days</p>
+        <h1 id="w-title">Let’s sketch your days.</h1>
+        <p class="lede">Four quick choices and a short note. Your host takes it from there.</p>
+        <div class="actions">
+          <button class="btn" type="button" id="begin">Begin</button>
+          <button class="link" type="button" id="resume" hidden>Pick up where you left off</button>
+        </div>
+        <p class="small" style="margin-top:22px">Rather write? <a href="mailto:lastantilla@gmail.com">lastantilla@gmail.com</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 1 · This or that -->
+  <section class="screen" id="s-pick" hidden aria-labelledby="pick-q">
+    <div class="col wide">
+      <div class="pick-head">
+        <p class="label" id="pick-n">1 of 4</p>
+        <div class="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <h2 id="pick-q" tabindex="-1">Where does your mind go first?</h2>
+      <p class="sub">Go with your first instinct.</p>
+      <div class="duo" id="duo" role="group" aria-labelledby="pick-q">
+        <button class="pic" type="button" data-side="a" aria-pressed="false"><img alt=""><span class="cap"></span><span class="tick" aria-hidden="true">✓</span></button>
+        <button class="pic" type="button" data-side="b" aria-pressed="false"><img alt=""><span class="cap"></span><span class="tick" aria-hidden="true">✓</span></button>
+      </div>
+      <div class="pick-foot">
+        <button class="back" type="button" data-back>Back</button>
+        <button class="link" type="button" id="both" aria-pressed="false">Both, please</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · The note (ad lib) -->
+  <section class="screen" id="s-note" hidden aria-labelledby="note-title">
+    <div class="col">
+      <p class="label">A short note</p>
+      <h2 id="note-title" tabindex="-1">Now, a few words from you.</h2>
+      <p class="sub">Tap any line to fill it in. Only your name is needed; the rest can wait for the call.</p>
+      <form class="letter" id="note" novalidate autocomplete="on">
+        <p>My name is <input class="blank" id="lead_name" name="lead_name" type="text" autocomplete="name" aria-label="Your full name" placeholder="your name" data-min="9" required>, and I’ll be traveling <select class="blank" id="party_mode" aria-label="Traveling alone or with company"><option value="alone">alone</option><option value="company">with company</option></select><span id="party-more" hidden>: <input class="blank num" id="others" type="number" min="0" max="99" inputmode="numeric" value="1" aria-label="Number of other adults"> other <span id="adults-word">adult</span> and <input class="blank num" id="children" type="number" min="0" max="30" inputmode="numeric" value="0" aria-label="Number of children under 18"> <span class="nw"><span id="kids-word">children</span>.</span></span><span id="alone-dot">.</span></p>
+        <p id="dates-known">We arrive on <input class="blank" id="arrival_date" type="date" aria-label="Arrival date"> and leave on <input class="blank" id="departure_date" type="date" aria-label="Departure date">. <button class="aside" type="button" id="no-dates">No dates yet?</button></p>
+        <p id="dates-unknown" hidden>We’re thinking of <select class="blank" id="month" aria-label="Month you are thinking of"></select>, for about <select class="blank" id="trip_days" aria-label="Number of days"><option value="1">one day</option><option value="2">two days</option><option value="3" selected>three days</option><option value="4">four days</option><option value="5">five days</option><option value="6">a week or more</option></select>. <button class="aside" type="button" id="yes-dates">I have dates</button></p>
+        <p>We’re coming for <select class="blank" id="occasion" aria-label="Occasion"><option value="">…</option><option value="anniversary">an anniversary</option><option value="honeymoon">a honeymoon</option><option value="birthday">a birthday</option><option value="family">a family gathering</option><option value="work">work, with a few days for ourselves</option><option value="see_island">simply to see the island</option><option value="other">something else</option></select>, and we’d call our pace <span class="nw"><select class="blank" id="pace" aria-label="Pace"><option value="unhurried">unhurried</option><option value="balanced" selected>balanced</option><option value="full">full days</option></select>.</span></p>
+        <p>The thing we most want to come home remembering is <span class="blank free" id="remember" role="textbox" contenteditable="true" aria-label="What you most want to come home remembering (optional)" data-ph="…"></span></p>
+        <p class="echo" id="echo"></p>
+      </form>
+      <p class="err" id="note-err" role="alert" hidden></p>
+      <div class="actions">
+        <button class="back" type="button" data-back>Back</button>
+        <span class="grow"></span>
+        <button class="btn" type="button" id="note-next">See your days</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · Taking shape + contact -->
+  <section class="screen" id="s-shape" hidden aria-labelledby="shape-title">
+    <div class="col wide">
+      <p class="label">A first sketch</p>
+      <h2 id="shape-title" tabindex="-1">Your days are taking shape.</h2>
+      <p class="sub">From your choices, these feel right. Tap to keep or set aside; your host refines them with you.</p>
+      <ul class="sketch" id="sketch"></ul>
+      <button class="link" type="button" id="see-all" aria-expanded="false">See all eight days</button>
+      <p class="journey-hint" id="journey-hint" hidden></p>
+    </div>
+    <div class="col">
+      <fieldset class="block">
+        <legend>How would you like to travel?</legend>
+        <div class="chips" id="format">
+          <label><input type="radio" name="format" value="private"><span>Private, just us</span></label>
+          <label><input type="radio" name="format" value="shared"><span>Shared, a small group <small>single days</small></span></label>
+          <label><input type="radio" name="format" value="unsure" checked><span>Not sure yet</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="block">
+        <legend>Where should your host reach you?</legend>
+        <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" inputmode="email"></div>
+        <div class="field"><label for="phone">Phone or WhatsApp <span class="small">with country code</span></label><input id="phone" type="tel" autocomplete="tel" placeholder="+1"></div>
+        <p class="qlabel" id="pref-l" style="margin-top:18px;font-size:1rem;font-family:var(--body);font-weight:500">How do you prefer we reach you?</p>
+        <div class="chips" role="radiogroup" aria-labelledby="pref-l" id="contact_pref">
+          <label><input type="radio" name="contact_pref" value="whatsapp"><span>WhatsApp</span></label>
+          <label><input type="radio" name="contact_pref" value="text"><span>Text</span></label>
+          <label><input type="radio" name="contact_pref" value="email" checked><span>Email</span></label>
+          <label><input type="radio" name="contact_pref" value="call"><span>A call</span></label>
+        </div>
+      </fieldset>
+      <p class="err" id="shape-err" role="alert" hidden></p>
+      <div class="actions">
+        <button class="back" type="button" data-back>Back</button>
+        <span class="grow"></span>
+        <button class="btn" type="button" id="send-sketch">Send to your host</button>
+      </div>
+      <p class="small" style="margin-top:14px">Nothing is booked or charged. We use this only to plan your days.</p>
+    </div>
+  </section>
+
+  <!-- 4 · Sent -->
+  <section class="screen" id="s-sent" hidden aria-labelledby="sent-title">
+    <div class="col">
+      <p class="label">Sent</p>
+      <h2 id="sent-title" tabindex="-1">Thank you<span data-first></span>.</h2>
+      <p class="sub" style="color:var(--ink);font-size:1.1rem">Your host will be in touch shortly to plan the days with you.</p>
+      <a class="btn btn-line" id="book-call" href="#" target="_blank" rel="noopener" style="margin-top:22px" hidden>Choose a time for the call</a>
+      <div class="offer">
+        <h3>Two more minutes now, one less phone call later.</h3>
+        <p>Tell us about the table, the walking and anything your host should know, so the call can be all about the days.</p>
+        <div class="actions">
+          <button class="btn" type="button" id="go-details">Add the details</button>
+          <button class="btn btn-line" type="button" id="no-details">That’s all for now</button>
+        </div>
+        <p class="small" style="margin-top:14px">Every question can be skipped.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · Details: your party -->
+  <section class="screen detail" id="d-party" hidden aria-labelledby="party-title">
+    <div class="col">
+      <p class="label">The details · Your party</p>
+      <h2 id="party-title" tabindex="-1">Who’s coming with you?</h2>
+      <p class="sub">Names help your host greet everyone properly. Children’s ages let us arrange the right car seats.</p>
+      <div id="party-list"></div>
+      <div class="actions"><button class="back" type="button" data-back>Back</button><span class="grow"></span><button class="link quiet" type="button" data-skip>Skip</button><button class="btn" type="button" data-next>Continue</button></div>
+    </div>
+  </section>
+
+  <!-- 6 · Details: the table -->
+  <section class="screen detail" id="d-table" hidden aria-labelledby="table-title">
+    <div class="col">
+      <p class="label">The details · The table</p>
+      <h2 id="table-title" tabindex="-1">The table.</h2>
+      <p class="sub">So every reservation is made with you in mind, and nobody has to ask at the table.</p>
+      <fieldset class="block">
+        <legend class="sr">Food restrictions and preferences</legend>
+        <div class="chips" id="diet"></div>
+        <div class="field" id="diet-other-wrap" hidden><label for="diet_other">Tell us more</label><input id="diet_other" type="text"></div>
+      </fieldset>
+      <div class="cond" id="allergy-wrap" hidden>
+        <fieldset>
+          <legend class="qlabel" style="font-size:1.05rem">How serious is it?</legend>
+          <div class="chips stack" id="allergy_level">
+            <label><input type="radio" name="allergy_level" value="preference"><span>A preference</span></label>
+            <label><input type="radio" name="allergy_level" value="intolerance"><span>An intolerance</span></label>
+            <label><input type="radio" name="allergy_level" value="allergy"><span>An allergy: your host should know what to do</span></label>
+          </div>
+        </fieldset>
+        <div class="field" id="allergy-notes-wrap" hidden><label for="allergy_notes">What should your host know?</label><textarea id="allergy_notes" placeholder="For example: carries an EpiPen, reacts to traces"></textarea></div>
+      </div>
+      <div class="exc" id="diet-exc" hidden></div>
+      <fieldset class="block">
+        <legend>And the style of the table?</legend>
+        <div class="chips" id="dining_style">
+          <label><input type="radio" name="dining_style" value="chefs_table"><span>Chef’s table</span></label>
+          <label><input type="radio" name="dining_style" value="where_locals_eat"><span>Where locals eat</span></label>
+          <label><input type="radio" name="dining_style" value="both"><span>A bit of both</span></label>
+        </div>
+      </fieldset>
+      <div class="actions"><button class="back" type="button" data-back>Back</button><span class="grow"></span><button class="link quiet" type="button" data-skip>Skip</button><button class="btn" type="button" data-next>Continue</button></div>
+    </div>
+  </section>
+
+  <!-- 7 · Details: comfort & access -->
+  <section class="screen detail" id="d-comfort" hidden aria-labelledby="comfort-title">
+    <div class="col">
+      <p class="label">The details · Comfort</p>
+      <h2 id="comfort-title" tabindex="-1">Comfort and access.</h2>
+      <p class="sub">So we choose the right stops, the right vehicle and the right pace.</p>
+      <fieldset class="block">
+        <legend>How much walking feels good?</legend>
+        <div class="chips stack" id="walking">
+          <label><input type="radio" name="walking" value="easy"><span>Walks easily, hills and uneven ground included</span></label>
+          <label><input type="radio" name="walking" value="short_flat"><span>Short walks on flat ground</span></label>
+          <label><input type="radio" name="walking" value="minimal"><span>As little walking as possible</span></label>
+          <label><input type="radio" name="walking" value="device"><span>Uses a wheelchair, walker or cane</span></label>
+        </div>
+        <div class="exc" id="walking-exc" hidden></div>
+      </fieldset>
+      <div class="cond" id="device-wrap" hidden>
+        <p class="qlabel" style="font-size:1.05rem">So we bring the right vehicle</p>
+        <label class="check"><input type="checkbox" id="dev_foldable"> It folds</label>
+        <label class="check"><input type="checkbox" id="dev_ramp"> A ramp would help</label>
+        <label class="check"><input type="checkbox" id="dev_transfer"> Help getting in and out of the vehicle would help</label>
+      </div>
+      <fieldset class="block">
+        <legend>At each stop, we can…</legend>
+        <div class="chips stack" id="dropoff">
+          <label><input type="radio" name="dropoff" value="door_always"><span>Drop you at the door whenever the road allows</span></label>
+          <label><input type="radio" name="dropoff" value="door_long"><span>Drop you at the door when the walk is long</span></label>
+          <label><input type="radio" name="dropoff" value="no_problem"><span>Walking is no problem</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="block">
+        <legend>Stairs and cobblestones</legend>
+        <p class="why">Old San Juan has both.</p>
+        <div class="chips" id="stairs_cobble">
+          <label><input type="radio" name="stairs_cobble" value="fine"><span>Fine</span></label>
+          <label><input type="radio" name="stairs_cobble" value="a_few"><span>A few are fine</span></label>
+          <label><input type="radio" name="stairs_cobble" value="avoid"><span>Avoid if possible</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="block">
+        <legend>Mountain roads are winding. Does anyone get carsick?</legend>
+        <p class="why">If so, we save the front seat and plan a few more pauses.</p>
+        <div class="chips" id="motion">
+          <label><input type="radio" name="motion" value="yes"><span>Yes</span></label>
+          <label><input type="radio" name="motion" value="no"><span>No</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="block">
+        <legend>Does anyone need extra shade or rest in the heat?</legend>
+        <div class="chips" id="heat">
+          <label><input type="radio" name="heat" value="yes"><span>Yes</span></label>
+          <label><input type="radio" name="heat" value="no"><span>No</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="block">
+        <legend>For river days: is everyone comfortable in the water?</legend>
+        <div class="chips stack" id="water">
+          <label><input type="radio" name="water" value="swims"><span>Swims confidently</span></label>
+          <label><input type="radio" name="water" value="edge"><span>Prefers to stay at the edge</span></label>
+          <label><input type="radio" name="water" value="skip"><span>Prefers to skip the water</span></label>
+        </div>
+        <div class="exc" id="water-exc" hidden></div>
+      </fieldset>
+      <p class="foot-note">Most days have a gentler version. Slow Water, for example, can go straight to the thermal baths of Coamo.</p>
+      <div class="actions"><button class="back" type="button" data-back>Back</button><span class="grow"></span><button class="link quiet" type="button" data-skip>Skip</button><button class="btn" type="button" data-next>Continue</button></div>
+    </div>
+  </section>
+
+  <!-- 8 · Details: health -->
+  <section class="screen detail" id="d-health" hidden aria-labelledby="health-title">
+    <div class="col">
+      <p class="label">The details · Health</p>
+      <h2 id="health-title" tabindex="-1">Only what helps.</h2>
+      <p class="sub">We don’t need a diagnosis. Only what would help your host keep everyone safe and comfortable.</p>
+      <div class="field"><label for="health_notes">Anything your host should know? <span class="small">Optional</span></label><textarea id="health_notes" placeholder="Medication timing, a condition that affects the day, pregnancy, a recent surgery"></textarea></div>
+      <fieldset class="block">
+        <legend>Someone we can call, who isn’t traveling <span class="small" id="ec-opt">Optional</span></legend>
+        <p class="why" id="ec-why">Only for an emergency. We never call for anything else.</p>
+        <div class="row2">
+          <div class="field"><label for="ec_name">Name</label><input id="ec_name" type="text"></div>
+          <div class="field"><label for="ec_relation">Relationship</label><input id="ec_relation" type="text"></div>
+        </div>
+        <div class="field"><label for="ec_phone">Phone, with country code</label><input id="ec_phone" type="tel" placeholder="+1"></div>
+      </fieldset>
+      <div class="cond" id="consent-wrap" hidden>
+        <label class="check"><input type="checkbox" id="health_consent"> <span>I agree that Last Antilla may keep the health, allergy and mobility details I’ve shared to plan my trip. They will be <span id="retention-text">deleted once the trip is over and they are no longer needed</span>.</span></label>
+      </div>
+      <p class="err" id="health-err" role="alert" hidden></p>
+      <div class="actions"><button class="back" type="button" data-back>Back</button><span class="grow"></span><button class="link quiet" type="button" data-skip>Skip</button><button class="btn" type="button" data-next>Continue</button></div>
+    </div>
+  </section>
+
+  <!-- 9 · Details: how you travel -->
+  <section class="screen detail" id="d-how" hidden aria-labelledby="how-title">
+    <div class="col">
+      <p class="label">The details · How you travel</p>
+      <h2 id="how-title" tabindex="-1">How you travel.</h2>
+      <fieldset class="block">
+        <legend>What do you want more of?</legend>
+        <p class="why">Choose any. They tell your host where to linger.</p>
+        <div class="chips" id="interests"></div>
+      </fieldset>
+      <fieldset class="block">
+        <legend>Should rum and cocktails be part of the days?</legend>
+        <div class="chips" id="alcohol">
+          <label><input type="radio" name="alcohol" value="yes"><span>Yes, gladly</span></label>
+          <label><input type="radio" name="alcohol" value="a_little"><span>A little</span></label>
+          <label><input type="radio" name="alcohol" value="none"><span>We’d rather not</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="block">
+        <legend>Will anyone want smoke breaks?</legend>
+        <p class="why">Only so we plan the pauses.</p>
+        <div class="chips" id="smoke">
+          <label><input type="radio" name="smoke" value="yes"><span>Yes</span></label>
+          <label><input type="radio" name="smoke" value="no"><span>No</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="block">
+        <legend>Photos of you during the trip</legend>
+        <div class="chips stack" id="photos">
+          <label><input type="radio" name="photos" value="yes"><span>Yes, take some for us</span></label>
+          <label><input type="radio" name="photos" value="places_only"><span>Only of places</span></label>
+          <label><input type="radio" name="photos" value="no"><span>No photos, please</span></label>
+        </div>
+      </fieldset>
+      <div class="field"><label for="stay">Where are you staying? <span class="small">So pickup is at your door</span></label><input id="stay" type="text" placeholder="Hotel, area, or still deciding"></div>
+      <fieldset class="block">
+        <legend>How are you arriving?</legend>
+        <div class="chips" id="arrival_mode">
+          <label><input type="radio" name="arrival_mode" value="flight"><span>Flight</span></label>
+          <label><input type="radio" name="arrival_mode" value="cruise"><span>Cruise</span></label>
+          <label><input type="radio" name="arrival_mode" value="on_island"><span>Already on the island</span></label>
+        </div>
+      </fieldset>
+      <div class="actions"><button class="back" type="button" data-back>Back</button><span class="grow"></span><button class="link quiet" type="button" data-skip>Skip</button><button class="btn" type="button" data-next>Continue</button></div>
+    </div>
+  </section>
+
+  <!-- 10 · Details: a little about you -->
+  <section class="screen detail" id="d-about" hidden aria-labelledby="about-title">
+    <div class="col">
+      <p class="label">The details · About you</p>
+      <h2 id="about-title" tabindex="-1">A little about you.</h2>
+      <p class="sub">All optional. The kind of thing a good host asks over the first coffee.</p>
+      <div class="field"><label for="home_city">Where are you traveling from?</label><input id="home_city" type="text" autocomplete="address-level2"></div>
+      <div class="field"><label for="occupation">What do you do?</label><p class="why" style="margin:0">It helps your host find the right conversations: a chef may want a kitchen, an architect the facades of Ponce.</p><input id="occupation" type="text"></div>
+      <fieldset class="block">
+        <legend>Have you been to Puerto Rico before?</legend>
+        <div class="chips" id="pr_before">
+          <label><input type="radio" name="pr_before" value="first"><span>First time</span></label>
+          <label><input type="radio" name="pr_before" value="san_juan"><span>Yes, mostly San Juan</span></label>
+          <label><input type="radio" name="pr_before" value="often"><span>Yes, several times</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="block">
+        <legend>Do you have family roots on the island?</legend>
+        <div class="chips" id="pr_roots">
+          <label><input type="radio" name="pr_roots" value="yes"><span>Yes</span></label>
+          <label><input type="radio" name="pr_roots" value="no"><span>No</span></label>
+        </div>
+        <div class="field" id="roots-town-wrap" hidden><label for="roots_town">Which town, if you’d like to visit?</label><input id="roots_town" type="text"></div>
+      </fieldset>
+      <fieldset class="block">
+        <legend>Language for your days</legend>
+        <div class="chips" id="language">
+          <label><input type="radio" name="language" value="en"><span>English</span></label>
+          <label><input type="radio" name="language" value="es"><span>Español</span></label>
+          <label><input type="radio" name="language" value="both"><span>Both</span></label>
+        </div>
+      </fieldset>
+      <div class="field"><label for="best_trip">The best trip you’ve ever taken, and what made it</label><textarea id="best_trip"></textarea></div>
+      <div class="field"><label for="celebrations">Any dates we should know about during your stay?</label><input id="celebrations" type="text" placeholder="A birthday, an anniversary"></div>
+      <div class="field"><label for="not_wanted">Anything you’d rather not do?</label><input id="not_wanted" type="text"></div>
+      <div class="field"><label for="other_stops">Is Puerto Rico part of a longer trip?</label><input id="other_stops" type="text" placeholder="Other islands, a cruise, a fixed flight"></div>
+      <fieldset class="block">
+        <legend>Who usually plans your trips?</legend>
+        <div class="chips" id="planner">
+          <label><input type="radio" name="planner" value="ourselves"><span>Ourselves</span></label>
+          <label><input type="radio" name="planner" value="advisor"><span>A travel advisor</span></label>
+          <label><input type="radio" name="planner" value="assistant"><span>An assistant</span></label>
+          <label><input type="radio" name="planner" value="concierge"><span>A concierge</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="block">
+        <legend>How did you hear about us?</legend>
+        <div class="chips" id="heard_from">
+          <label><input type="radio" name="heard_from" value="concierge"><span>A concierge</span></label>
+          <label><input type="radio" name="heard_from" value="advisor"><span>A travel advisor</span></label>
+          <label><input type="radio" name="heard_from" value="instagram"><span>Instagram</span></label>
+          <label><input type="radio" name="heard_from" value="search"><span>A search</span></label>
+          <label><input type="radio" name="heard_from" value="referral"><span>A friend</span></label>
+          <label><input type="radio" name="heard_from" value="other"><span>Elsewhere</span></label>
+        </div>
+      </fieldset>
+      <div class="field"><label for="special_requests">Special requests</label><p class="why" style="margin:0">A surprise, a date to mark quietly, anything else.</p><textarea id="special_requests"></textarea></div>
+      <div class="actions"><button class="back" type="button" data-back>Back</button><span class="grow"></span><button class="link quiet" type="button" data-skip>Skip</button><button class="btn" type="button" data-next>Review</button></div>
+    </div>
+  </section>
+
+  <!-- 11 · Review -->
+  <section class="screen detail" id="d-review" hidden aria-labelledby="review-title">
+    <div class="col">
+      <p class="label">The details · Review</p>
+      <h2 id="review-title" tabindex="-1">Does this look right?</h2>
+      <p class="sub" id="review-sub">Change anything you like. Next comes a short agreement with your answers in place.</p>
+      <div class="rev" id="rev"></div>
+      <p class="err" id="review-err" role="alert" hidden></p>
+      <div class="actions"><button class="back" type="button" data-back>Back</button><span class="grow"></span><button class="btn" type="button" id="okay">Okay</button></div>
+    </div>
+  </section>
+
+  <!-- 12 · Document -->
+  <section class="screen" id="d-doc" hidden aria-labelledby="doc-title">
+    <div class="col">
+      <p class="sub no-print" style="margin-top:0">Your answers are highlighted. Check them, then sign. If you’d rather, you can sign before the trip.</p>
+      <article class="doc" id="doc"></article>
+      <div class="sign no-print">
+        <div class="field"><label for="signature_name">Type your full name to sign</label><input id="signature_name" type="text" autocomplete="name"></div>
+        <label class="check"><input type="checkbox" id="c_read"> I’ve read and agree.</label>
+        <label class="check"><input type="checkbox" id="c_accurate"> The information above is accurate.</label>
+        <p class="err" id="doc-err" role="alert" hidden></p>
+        <div class="actions">
+          <button class="back" type="button" id="doc-edit">Back to edit</button>
+          <span class="grow"></span>
+          <button class="btn btn-line" type="button" id="print">Download PDF</button>
+          <button class="btn" type="button" id="send-full">Send</button>
+        </div>
+        <p style="margin-top:10px;text-align:right"><button class="link quiet" type="button" id="sign-later">Send without signing; I’ll sign before the trip</button></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 · Done -->
+  <section class="screen" id="s-done" hidden aria-labelledby="done-title">
+    <div class="col">
+      <p class="label">All set</p>
+      <h2 id="done-title" tabindex="-1">Until soon<span data-first></span>.</h2>
+      <p class="sub" style="color:var(--ink);font-size:1.1rem" id="done-line">Your host will be in touch shortly to plan the days with you.</p>
+      <a class="btn btn-line" id="book-call-2" href="#" target="_blank" rel="noopener" style="margin-top:22px" hidden>Choose a time for the call</a>
+      <div class="actions"><a class="link" href="days.html">Look through the days in the meantime</a></div>
+    </div>
+  </section>
+
+  <p style="text-align:center;padding:0 var(--gutter) 32px"><button class="link quiet" type="button" id="clear">Clear my answers</button></p>
+</main>
+
+<div class="hostpanel" id="hostpanel" hidden></div>
+
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-top">
+      <div>
+        <a class="brand" href="index.html">Last Antilla Travel Co.</a>
+        <p>Days and journeys in Puerto Rico</p>
+        <a class="mail" href="mailto:lastantilla@gmail.com">lastantilla@gmail.com</a>
+      </div>
+      <ul class="foot-links">
+        <li><a href="days.html">The Days</a></li>
+        <li><a href="journeys.html">Journeys</a></li>
+        <li><a href="how-it-works.html">How It Works</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="plan.html">Plan your days</a></li>
+      </ul>
+    </div>
+    <p class="foot-bottom">© 2026 Last Antilla Travel Co. · Puerto Rico</p>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Config: values pending from C. null uses general wording in the agreement. ---------- */
+  var CONFIG = {
+    legal_entity: null,          // nombre legal de la empresa
+    cancellation_policy: null,   // política de FareHarbor
+    health_retention: null,      // plazo de borrado de datos de salud, p. ej. "90 days"
+    schedule_link: null,         // enlace para agendar la llamada
+    legal_ready: true,           // documento legal activo; false lo oculta y "Send the details" envía sin firma
+    agreement_version: "2026-10-03 (provisional, sin revisión de abogado)", // cambiarla cada vez que cambie el texto
+    brand_email: "lastantilla@gmail.com",
+    notify_to: "lastantilla@gmail.com",   // receives every submission (FormSubmit); after activation it can be the alias FormSubmit sends
+    notify_cc: []                          // more addresses that get a copy, e.g. ["name@example.com"]
+  };
+  var IMG = "img/";
+  var DRAFT_KEY = "la_form_draft_v1";
+  var LOCAL = /^(localhost|127\.0\.0\.1|)$/.test(location.hostname);
+  var HOST = /[?&]host=1\b/.test(location.search) && LOCAL;
+
+  /* ---------- Content ---------- */
+  var DAYS = [
+    { id: "old-san-juan", name: "Old San Juan, Unhurried", len: "Half day", img: "viejo-san-juan-calle.jpg", alt: "A shaded cobblestone street in Old San Juan with pastel facades", line: "Five centuries of streets, walked at the pace of the people who live on them." },
+    { id: "southern-city", name: "The Southern City", len: "Full day", img: "ponce-plaza.jpg", alt: "The plaza in Ponce with fountains and the cathedral behind the trees", line: "Ponce is grand, warm and proud of it. We give it the whole day." },
+    { id: "cordillera", name: "The Cordillera", len: "Full day", img: "cordillera-lago.jpg", alt: "A mountain lake in the island's interior under a wide blue sky", line: "The road through the middle of the island, and the towns that grew along it." },
+    { id: "river-and-stone", name: "River & Stone", len: "Full day", img: "cascada-selva.jpg", alt: "A waterfall descending through dense green forest into a pool", line: "Cold water, warm stone, and a swim you will remember on the flight home." },
+    { id: "slow-water", name: "Slow Water", len: "Full day", img: "bosque-luz.jpg", alt: "Morning light through the branches of a wide tree in a forest clearing", line: "Yoga by the river, then the thermal baths of Coamo. A day to lower your shoulders." },
+    { id: "west-to-the-light", name: "West to the Light", len: "Full day", img: "atardecer-rocas.jpg", alt: "Sun low over the Caribbean, seen past dark rocks and sea grapes", line: "From the mountains to the western coast, arriving as the light turns." },
+    { id: "loiza", name: "Loíza, by the Sea", len: "Half day", img: "costa-turquesa.jpg", alt: "Clear turquoise water over flat coastal rock, with the city far across the bay", line: "Just east of San Juan, a coast with its own history and its own rhythm." },
+    { id: "after-dark", name: "San Juan After Dark", len: "Evening", img: "cocteles-barra.jpg", alt: "Three craft cocktails on a wooden bar", line: "San Juan’s cocktail rooms, at the hour they come alive. Adults only." }
+  ];
+  var DAY = {}; DAYS.forEach(function (d) { DAY[d.id] = d; });
+
+  // Each round: two photos; a choice adds points to days and sets a field.
+  var ROUNDS = [
+    { key: "land", q: "Where does your mind go first?",
+      a: { v: "mountains", cap: "The mountains", img: "cordillera-lago.jpg", alt: "A mountain lake in the island's interior under a wide blue sky", pts: { "cordillera": 3, "slow-water": 1, "river-and-stone": 1 } },
+      b: { v: "sea", cap: "The sea", img: "costa-rocosa.jpg", alt: "Waves breaking around a dark rock point in deep blue water", pts: { "loiza": 3, "west-to-the-light": 3 } } },
+    { key: "draw", q: "Which one pulls you?",
+      a: { v: "history", cap: "Old facades, old stories", img: "ponce-neoclasico.jpg", alt: "A neoclassical building in Ponce with tall white columns under a blue sky", pts: { "old-san-juan": 3, "southern-city": 3, "loiza": 1 } },
+      b: { v: "river", cap: "Cold river water", img: "rio-canon.jpg", alt: "A still river pool between mossy boulders in a forested canyon", pts: { "river-and-stone": 3, "slow-water": 2 } } },
+    { key: "morning", q: "How do your days begin?",
+      a: { v: "slow", cap: "Slow mornings", img: "columpio-mar.jpg", alt: "A wooden swing hanging from a tree over a calm Caribbean bay", pts: { "slow-water": 2, "old-san-juan": 1 } },
+      b: { v: "early", cap: "Out the door early", img: "cascada-valle.jpg", alt: "A waterfall at the edge of a green valley, with trees in the foreground", pts: { "west-to-the-light": 2, "river-and-stone": 1, "cordillera": 1 } } },
+    { key: "evening", q: "And the evenings?",
+      a: { v: "cocktail", cap: "A cocktail as night falls", img: "cocteles-barra-2.jpg", alt: "Three cocktails lined up on a bar, with shelves of bottles behind", pts: { "after-dark": 4 } },
+      b: { v: "sunset", cap: "Sunset, then an early night", img: "pareja-atardecer.jpg", alt: "Two people seated on a cliff edge, framed by sea grape branches, watching the sea at sunset", pts: { "west-to-the-light": 2 } } }
+  ];
+
+  var DIET = [
+    ["none", "No restrictions"], ["no_pork", "No pork"], ["kosher_strict", "Kosher (strict)"], ["kosher_style", "Kosher-style"],
+    ["halal", "Halal"], ["vegetarian", "Vegetarian"], ["vegan", "Vegan"], ["pescatarian", "Pescatarian"],
+    ["no_shellfish", "No shellfish"], ["no_fish", "No fish"], ["gf_celiac", "Gluten-free (celiac)"], ["gf_pref", "Gluten-free (preference)"],
+    ["dairy_free", "Dairy-free"], ["lactose", "Lactose intolerant"], ["nut_allergy", "Nut or peanut allergy"], ["other", "Other"]
+  ];
+  var DIET_L = {}; DIET.forEach(function (d) { DIET_L[d[0]] = d[1]; });
+  var ALLERGY_CODES = ["nut_allergy", "no_shellfish", "no_fish", "gf_celiac", "dairy_free", "other"];
+  var INTERESTS = [["coffee","Coffee"],["rum","Rum"],["history","History"],["architecture","Architecture"],["art","Art"],["music_dance","Music & dance"],["food","Food & cooking"],["nature","Nature"],["wellness","Wellness"],["photography","Photography"],["cigars","Cigars"]];
+  var RELATIONS = [["partner","Partner"],["child","Child"],["parent","Parent"],["sibling","Sibling"],["friend","Friend"],["colleague","Colleague"],["family","Other family"]];
+  var AGE_RANGES = [["18_34","18 to 34"],["35_49","35 to 49"],["50_64","50 to 64"],["65_74","65 to 74"],["75_plus","75 or older"]];
+  var WALK_L = { easy: "Walks easily", short_flat: "Short walks on flat ground", minimal: "As little walking as possible", device: "Wheelchair, walker or cane" };
+  var WATER_L = { swims: "Swims confidently", edge: "Stays at the edge", skip: "Skips the water" };
+
+  /* ---------- State ---------- */
+  function fresh() {
+    return {
+      picks: {}, lead_name: "", party_mode: "alone", others: 1, children: 0,
+      arrival_date: "", departure_date: "", dates_known: true, month: "", trip_days: "3",
+      occasion: "", pace: "balanced", remember: "", days_kept: null, format: "unsure",
+      email: "", phone: "", contact_pref: "email",
+      guests: [], diet: [], diet_other: "", diet_exceptions: [], diet_all: true, allergy_level: "", allergy_notes: "", dining_style: "",
+      walking: "", walking_exc: {}, mobility_device: { foldable: false, ramp: false, transfer: false }, dropoff: "", stairs_cobble: "", motion: "", heat: "", water: "", water_exc: {},
+      health_notes: "", emergency_contact: { name: "", relation: "", phone: "" }, health_consent: false,
+      interests: [], alcohol: "", smoke: "", photos: "", stay: "", arrival_mode: "",
+      home_city: "", occupation: "", pr_before: "", pr_roots: "", roots_town: "", language: "", best_trip: "", celebrations: "", not_wanted: "", other_stops: "", planner: "", heard_from: "", special_requests: "",
+      signature_name: "", consents: { read: false, accurate: false },
+      stage: "new", sketch_sent_at: "", details_sent_at: ""
+    };
+  }
+  var S = fresh();
+  // Fields never written to the browser draft (health, allergy and mobility).
+  var PRIVATE = ["diet", "diet_exceptions", "diet_other", "health_notes", "health_consent", "allergy_level", "allergy_notes", "walking", "walking_exc", "mobility_device", "dropoff", "stairs_cobble", "motion", "heat", "emergency_contact"];
+
+  function save() {
+    try {
+      var copy = JSON.parse(JSON.stringify(S));
+      PRIVATE.forEach(function (k) { delete copy[k]; });
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(copy));
+    } catch (e) { /* storage unavailable: the form still works */ }
+  }
+  function loadDraft() {
+    try { var raw = localStorage.getItem(DRAFT_KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+  }
+  function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} }
+
+  /* ---------- Helpers ---------- */
+  function $(s, r) { return (r || document).querySelector(s); }
+  function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+  function esc(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function n(v, min) { var x = parseInt(v, 10); return isNaN(x) ? (min || 0) : Math.max(min || 0, x); }
+  function adults() { return S.party_mode === "alone" ? 1 : n(S.others) + 1; }
+  function kids() { return S.party_mode === "alone" ? 0 : n(S.children); }
+  function total() { return adults() + kids(); }
+  function firstName() { return (S.lead_name.trim().split(/\s+/)[0] || ""); }
+  function fmtDate(iso) { if (!iso) return ""; var d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }); }
+  function tripLength() {
+    if (S.dates_known && S.arrival_date && S.departure_date) {
+      var a = new Date(S.arrival_date + "T12:00:00"), b = new Date(S.departure_date + "T12:00:00");
+      var d = Math.round((b - a) / 864e5); return d > 0 ? d : 0;
+    }
+    if (!S.dates_known) return n(S.trip_days);
+    return 0;
+  }
+  function radioVal(name) { var el = $('input[name="' + name + '"]:checked'); return el ? el.value : ""; }
+  function setRadio(name, v) { $$('input[name="' + name + '"]').forEach(function (el) { el.checked = el.value === v; }); }
+  function track(ev, id) { (window.laEvents = window.laEvents || []).push({ ev: ev, id: id, t: Date.now() }); }
+
+  // Width of inline blanks follows their content.
+  var meas = document.createElement("canvas").getContext("2d");
+  function fit(el) {
+    var cs = getComputedStyle(el); meas.font = cs.fontSize + " " + cs.fontFamily;
+    var txt = el.tagName === "SELECT" ? (el.options[el.selectedIndex] || {}).text || "" : (el.value || el.placeholder || "");
+    var extra = el.tagName === "SELECT" ? 24 : 12;
+    var w = Math.ceil(meas.measureText(txt).width) + extra;
+    var min = el.dataset.min ? parseFloat(cs.fontSize) * el.dataset.min * 0.5 : 0;
+    el.style.width = Math.max(w, min) + "px";
+  }
+
+  /* ---------- Navigation ---------- */
+  var ACT1 = ["s-pick", "s-note", "s-shape"];
+  var ACT2 = ["d-party", "d-table", "d-comfort", "d-health", "d-how", "d-about", "d-review"];
+  var current = "s-welcome", hist = [], returnToReview = false;
+
+  function needsParty() { return total() > 1; }
+  function nextDetail(id) {
+    var i = ACT2.indexOf(id), nx = ACT2[i + 1];
+    if (returnToReview) return "d-review";
+    return nx;
+  }
+  function show(id, opts) {
+    opts = opts || {};
+    if (id === "d-party" && !needsParty()) id = opts.back ? hist.pop() || "s-sent" : "d-table";
+    track("screen_done", current);
+    if (!opts.back && current !== id) hist.push(current);
+    $$(".screen").forEach(function (s) { s.hidden = s.id !== id; });
+    current = id;
+    track("screen_view", id);
+    if (id === "s-pick") renderRound();
+    if (id === "s-note") prepNote();
+    if (id === "s-shape") renderShape();
+    if (id === "d-party") renderParty();
+    if (id === "d-table") renderDietExc();
+    if (id === "d-comfort") { renderExc("walking"); renderExc("water"); }
+    if (id === "d-health") prepHealth();
+    if (id === "d-review") renderReview();
+    if (id === "d-doc") renderDoc();
+    if (id === "s-sent" || id === "s-done") $$("[data-first]").forEach(function (el) { el.textContent = firstName() ? ", " + firstName() : ""; });
+    progress();
+    window.scrollTo(0, 0);
+    var h = $("#" + id + " [tabindex='-1']") || $("#" + id + " h1, #" + id + " h2");
+    if (h && id !== "s-welcome") { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
+  }
+  function back() {
+    if (current === "d-review") { returnToReview = false; show("d-about", { back: true }); return; }
+    var prev = hist.pop();
+    if (current === "s-pick" && round > 0) { round--; renderRound(); if (prev) hist.push(prev); return; }
+    if (prev) show(prev, { back: true });
+  }
+  function progress() {
+    $("#formbar").classList.toggle("off", current === "s-welcome");
+    var bar = $("#bar"), note = $("#step-note"), i1 = ACT1.indexOf(current), i2 = ACT2.indexOf(current);
+    if (current === "s-pick") { bar.style.width = (8 + round * 6) + "%"; note.textContent = "Step 1 of 3"; }
+    else if (i1 >= 0) { bar.style.width = ((i1 + 1) / 3 * 100 - 10) + "%"; note.textContent = "Step " + (i1 + 1) + " of 3"; }
+    else if (i2 >= 0) { var steps = ACT2.filter(function (s) { return s !== "d-party" || needsParty(); }); var k = steps.indexOf(current); bar.style.width = ((k + 1) / steps.length * 100) + "%"; note.textContent = "Details " + (k + 1) + " of " + steps.length; }
+    else if (current === "s-sent" || current === "s-done" || current === "d-doc") { bar.style.width = "100%"; note.textContent = ""; }
+    else { bar.style.width = "0"; note.textContent = ""; }
+  }
+
+  /* ---------- 1 · This or that ---------- */
+  var round = 0, roundLock = false;
+  function renderRound() {
+    var r = ROUNDS[round];
+    $("#pick-n").textContent = (round + 1) + " of " + ROUNDS.length;
+    $("#pick-q").textContent = r.q;
+    $$("#s-pick .dots i").forEach(function (d, i) { d.classList.toggle("on", i <= round); });
+    var duo = $("#duo"); duo.classList.remove("decided");
+    ["a", "b"].forEach(function (side) {
+      var o = r[side], btn = $('.pic[data-side="' + side + '"]', duo), img = $("img", btn);
+      img.src = IMG + o.img; img.alt = o.alt;
+      $(".cap", btn).textContent = o.cap;
+      btn.setAttribute("aria-pressed", String(S.picks[r.key] === o.v)); btn.classList.toggle("on", S.picks[r.key] === o.v || S.picks[r.key] === "both");
+      btn.setAttribute("aria-label", o.cap);
+    });
+    $("#both").setAttribute("aria-pressed", String(S.picks[r.key] === "both"));
+    // Preload the next pair.
+    var nx = ROUNDS[round + 1]; if (nx) { new Image().src = IMG + nx.a.img; new Image().src = IMG + nx.b.img; }
+    progress();
+  }
+  function choose(side) {
+    if (roundLock) return;
+    var r = ROUNDS[round];
+    S.picks[r.key] = side === "both" ? "both" : r[side].v;
+    if (r.key === "morning") S.pace = side === "a" ? "unhurried" : side === "b" ? "full" : "balanced";
+    if (r.key === "evening" && side !== "b" && !S.alcohol) S.alcohol = "yes";
+    S.days_kept = null; // picks changed: recompute the sketch
+    save();
+    var duo = $("#duo"); duo.classList.add("decided");
+    $$(".pic", duo).forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.side === side)); b.classList.toggle("on", side === "both" || b.dataset.side === side); });
+    $("#both").setAttribute("aria-pressed", String(side === "both"));
+    roundLock = true;
+    setTimeout(function () {
+      roundLock = false;
+      if (round < ROUNDS.length - 1) { round++; renderRound(); $("#pick-q").focus({ preventScroll: true }); }
+      else show("s-note");
+    }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 60 : 420);
+  }
+
+  /* ---------- 2 · The note ---------- */
+  function monthOptions() {
+    var sel = $("#month"), now = new Date(); sel.innerHTML = "";
+    for (var i = 0; i < 18; i++) {
+      var d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      var o = document.createElement("option");
+      o.value = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+      o.textContent = d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+      sel.appendChild(o);
+    }
+    var o2 = document.createElement("option"); o2.value = "undecided"; o2.textContent = "sometime soon"; sel.appendChild(o2);
+  }
+  function prepNote() {
+    $("#lead_name").value = S.lead_name;
+    $("#party_mode").value = S.party_mode;
+    $("#others").value = S.others; $("#children").value = S.children;
+    $("#arrival_date").value = S.arrival_date; $("#departure_date").value = S.departure_date;
+    $("#month").value = S.month || $("#month").options[1].value;
+    $("#trip_days").value = S.trip_days;
+    $("#occasion").value = S.occasion; $("#pace").value = S.pace;
+    if ($("#remember").textContent !== S.remember) $("#remember").textContent = S.remember;
+    var today = new Date().toISOString().slice(0, 10);
+    $("#arrival_date").min = today; $("#departure_date").min = S.arrival_date || today;
+    syncNote();
+  }
+  function syncNote() {
+    var company = $("#party_mode").value === "company";
+    $("#party-more").hidden = !company; $("#alone-dot").hidden = company;
+    $("#adults-word").textContent = n($("#others").value) === 1 ? "adult" : "adults";
+    $("#kids-word").textContent = n($("#children").value) === 1 ? "child" : "children";
+    $("#dates-known").hidden = !S.dates_known; $("#dates-unknown").hidden = S.dates_known;
+    $$("#note .blank:not(.free):not(.num):not([type=date])").forEach(fit);
+    var p = S.picks, bits = [];
+    if (p.land) bits.push(p.land === "both" ? "the mountains and the sea" : p.land === "mountains" ? "the mountains" : "the sea");
+    if (p.draw) bits.push(p.draw === "both" ? "old streets and cold rivers" : p.draw === "history" ? "old stories" : "cold rivers");
+    if (p.evening) bits.push(p.evening === "sunset" ? "early nights" : p.evening === "cocktail" ? "a cocktail at dusk" : "a cocktail, then the sunset");
+    $("#echo").textContent = bits.length ? "Noted from your choices: " + bits.join(", ") + "." : "";
+  }
+  function readNote() {
+    S.lead_name = $("#lead_name").value.trim();
+    S.party_mode = $("#party_mode").value;
+    S.others = n($("#others").value); S.children = n($("#children").value);
+    S.arrival_date = $("#arrival_date").value; S.departure_date = $("#departure_date").value;
+    S.month = $("#month").value; S.trip_days = $("#trip_days").value;
+    S.occasion = $("#occasion").value; S.pace = $("#pace").value;
+    S.remember = $("#remember").textContent.trim();
+    if (S.party_mode === "company" && S.others === 0 && S.children === 0) S.others = 1;
+  }
+  function validNote() {
+    var err = "";
+    $("#lead_name").classList.toggle("bad", !S.lead_name);
+    if (!S.lead_name) err = "Your name, please, so we know who we’re welcoming.";
+    else if (S.dates_known && S.arrival_date && S.departure_date && S.departure_date < S.arrival_date) err = "The leaving date comes before the arrival date.";
+    var box = $("#note-err"); box.textContent = err; box.hidden = !err;
+    if (err && !S.lead_name) $("#lead_name").focus();
+    return !err;
+  }
+
+  /* ---------- 3 · Taking shape ---------- */
+  function scoreDays() {
+    var sc = {}; DAYS.forEach(function (d) { sc[d.id] = 0; });
+    ROUNDS.forEach(function (r) {
+      var v = S.picks[r.key]; if (!v) return;
+      [r.a, r.b].forEach(function (o) { if (v === o.v || v === "both") Object.keys(o.pts).forEach(function (k) { sc[k] += o.pts[k] * (v === "both" ? 0.6 : 1); }); });
+    });
+    if (S.pace === "unhurried") { sc["slow-water"] += 1; sc["old-san-juan"] += 1; sc["west-to-the-light"] -= 1; }
+    if (S.pace === "full") { sc["west-to-the-light"] += 1; sc["river-and-stone"] += 1; }
+    if (S.occasion === "anniversary" || S.occasion === "honeymoon") { sc["west-to-the-light"] += 1; sc["after-dark"] += 1; }
+    if (S.occasion === "family") { sc["loiza"] += 1; sc["old-san-juan"] += 1; sc["after-dark"] -= 9; }
+    if (kids() > 0) sc["after-dark"] = -99;
+    // Gentle tiebreak toward the island's anchors.
+    sc["old-san-juan"] += 0.3; sc["cordillera"] += 0.2; sc["southern-city"] += 0.1;
+    return DAYS.map(function (d) { return d.id; }).sort(function (a, b) { return sc[b] - sc[a]; });
+  }
+  function journeyFor(len) {
+    if (len >= 5) return { name: "The Long Way Around", days: 5 };
+    if (len >= 3) return { name: "The Island in Three", days: 3 };
+    if (len === 2) return { name: "San Juan & the Interior", days: 2 };
+    return null;
+  }
+  var showAll = false;
+  function renderShape() {
+    var order = scoreDays();
+    if (!S.days_kept) S.days_kept = order.slice(0, 3);
+    var list = showAll ? order.filter(function (id) { return !(kids() > 0 && id === "after-dark"); }) : order.slice(0, 3);
+    S.days_kept.forEach(function (id) { if (list.indexOf(id) < 0) list.push(id); });
+    var ul = $("#sketch"); ul.innerHTML = "";
+    list.forEach(function (id) {
+      var d = DAY[id], on = S.days_kept.indexOf(id) >= 0, li = document.createElement("li");
+      li.innerHTML = '<button type="button" class="daycard" aria-pressed="' + on + '" data-day="' + id + '">' +
+        '<img src="' + IMG + d.img + '" alt="' + esc(d.alt) + '" loading="lazy">' +
+        '<span class="keep" aria-hidden="true"></span>' +
+        '<span class="t"><b>' + esc(d.name) + '</b><span>' + esc(d.len) + ' · ' + esc(d.line) + '</span></span></button>';
+      ul.appendChild(li);
+    });
+    $("#see-all").textContent = showAll ? "Show fewer" : "See all " + (kids() > 0 ? "seven" : "eight") + " days";
+    $("#see-all").setAttribute("aria-expanded", String(showAll));
+    var len = tripLength(), j = journeyFor(len), hint = $("#journey-hint");
+    if (j && len >= 2) {
+      hint.innerHTML = "With " + (S.dates_known ? len + " days" : "about " + len + " days") + " on the island, <b>" + esc(j.name) + "</b> is a natural fit: a private journey of " + j.days + " days, built around the ones you keep." + (S.format === "shared" ? " Journeys are always private; single days can be shared." : "");
+      hint.hidden = false;
+    } else hint.hidden = true;
+    setRadio("format", S.format);
+    $("#email").value = S.email; $("#phone").value = S.phone; setRadio("contact_pref", S.contact_pref);
+  }
+  function validShape() {
+    S.format = radioVal("format") || "unsure";
+    S.email = $("#email").value.trim(); S.phone = $("#phone").value.trim(); S.contact_pref = radioVal("contact_pref") || "email";
+    var err = "", emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(S.email), phoneOk = S.phone.replace(/\D/g, "").length >= 7;
+    if (S.contact_pref === "email" && !S.email && phoneOk) { S.contact_pref = "whatsapp"; setRadio("contact_pref", "whatsapp"); }
+    if (!emailOk && !phoneOk) err = "An email or a phone number, please, so your host can reach you.";
+    else if (S.contact_pref === "email" && !emailOk) err = "An email address, please, so your host can write.";
+    else if (S.contact_pref !== "email" && !phoneOk) err = "A phone number with country code, please, so your host can reach you that way.";
+    else if (S.email && !emailOk) err = "That email address doesn’t look complete.";
+    $("#email").setAttribute("aria-invalid", String(!!err && (S.contact_pref === "email" || !!S.email) && !emailOk));
+    $("#phone").setAttribute("aria-invalid", String(!!err && S.contact_pref !== "email" && !phoneOk));
+    var box = $("#shape-err"); box.textContent = err; box.hidden = !err;
+    if (err) { var bad = $("#shape [aria-invalid=true]") || $("#s-shape [aria-invalid=true]"); if (bad) bad.focus(); }
+    return !err;
+  }
+
+  /* ---------- Details: party ---------- */
+  function syncGuests() {
+    var want = [];
+    for (var i = 0; i < adults() - 1; i++) want.push("adult");
+    for (var j = 0; j < kids(); j++) want.push("child");
+    var adultsOld = S.guests.filter(function (g) { return g.type === "adult"; }), kidsOld = S.guests.filter(function (g) { return g.type === "child"; });
+    var out = [], ai = 0, ki = 0;
+    want.forEach(function (t) {
+      if (t === "adult") out.push(adultsOld[ai++] || { type: "adult", name: "", relation: "", age_range: "" });
+      else out.push(kidsOld[ki++] || { type: "child", name: "", age: "" });
+    });
+    S.guests = out;
+  }
+  function renderParty() {
+    syncGuests();
+    var box = $("#party-list"), html = "", ai = 0, ki = 0, big = total() >= 9;
+    S.guests.forEach(function (g, i) {
+      var title = g.type === "adult" ? "Adult " + (++ai + 1) : "Child " + (++ki);
+      html += '<div class="person"><h3>' + title + '</h3><div class="row2">' +
+        '<div class="field"><label for="g' + i + '_name">Name</label><input id="g' + i + '_name" data-g="' + i + '" data-k="name" type="text" value="' + esc(g.name) + '"></div>';
+      if (g.type === "adult") {
+        html += '<div class="field"><label for="g' + i + '_rel">Relationship to you</label><select id="g' + i + '_rel" data-g="' + i + '" data-k="relation"><option value="">Choose</option>' +
+          RELATIONS.map(function (r) { return '<option value="' + r[0] + '"' + (g.relation === r[0] ? " selected" : "") + ">" + r[1] + "</option>"; }).join("") + "</select></div>" +
+          '<div class="field"><label for="g' + i + '_age">Age range</label><select id="g' + i + '_age" data-g="' + i + '" data-k="age_range"><option value="">Choose</option>' +
+          AGE_RANGES.map(function (r) { return '<option value="' + r[0] + '"' + (g.age_range === r[0] ? " selected" : "") + ">" + r[1] + "</option>"; }).join("") + "</select></div>";
+      } else {
+        html += '<div class="field"><label for="g' + i + '_age">Age</label><input id="g' + i + '_age" data-g="' + i + '" data-k="age" type="number" min="0" max="17" inputmode="numeric" value="' + esc(g.age) + '"></div>';
+      }
+      html += "</div></div>";
+    });
+    if (big) html = '<p class="why" style="margin-top:18px">A larger party: fill in what you can now. Your host will confirm the rest.</p>' + html;
+    box.innerHTML = html;
+  }
+
+  /* ---------- Details: table ---------- */
+  function renderDietChips() {
+    $("#diet").innerHTML = DIET.map(function (d) {
+      return '<label><input type="checkbox" name="diet" value="' + d[0] + '"><span>' + esc(d[1]) + "</span></label>";
+    }).join("");
+    $("#interests").innerHTML = INTERESTS.map(function (d) {
+      return '<label><input type="checkbox" name="interests" value="' + d[0] + '"><span>' + esc(d[1]) + "</span></label>";
+    }).join("");
+  }
+  function people() {
+    var list = [{ key: "lead", name: firstName() || "You" }];
+    var ai = 1, ki = 0; S.guests.forEach(function (g, i) { var fb = g.type === "child" ? "Child " + (++ki) : "Adult " + (++ai); list.push({ key: "g" + i, name: (g.name || "").trim().split(/\s+/)[0] || fb }); });
+    return list;
+  }
+  function syncDiet() {
+    S.diet = $$('input[name="diet"]:checked').map(function (el) { return el.value; });
+    $("#diet-other-wrap").hidden = S.diet.indexOf("other") < 0;
+    var needLevel = S.diet.some(function (c) { return ALLERGY_CODES.indexOf(c) >= 0; });
+    $("#allergy-wrap").hidden = !needLevel;
+    if (!needLevel) { S.allergy_level = ""; S.allergy_notes = ""; $("#allergy_notes").value = ""; setRadio("allergy_level", ""); }
+    $("#allergy-notes-wrap").hidden = S.allergy_level !== "allergy";
+    renderDietExc();
+  }
+  function renderDietExc() {
+    var box = $("#diet-exc"), codes = S.diet.filter(function (c) { return c !== "none"; });
+    if (total() < 2 || !codes.length) { box.hidden = true; box.innerHTML = ""; return; }
+    syncGuests();
+    var ppl = people(), html = '<label class="check"><input type="checkbox" id="diet_all"' + (S.diet_all ? " checked" : "") + "> " + (total() === 2 ? "This applies to both of us" : "This applies to everyone") + "</label>";
+    if (!S.diet_all) {
+      codes.forEach(function (c) {
+        html += '<p class="who">' + esc(DIET_L[c]) + ": who?</p><div class=\"chips\">" + ppl.map(function (p) {
+          var on = S.diet_exceptions.some(function (e) { return e.code === c && e.guest === p.key; });
+          return '<label><input type="checkbox" data-exc="' + c + '" value="' + p.key + '"' + (on ? " checked" : "") + "><span>" + esc(p.name) + "</span></label>";
+        }).join("") + "</div>";
+      });
+    }
+    box.innerHTML = html; box.hidden = false;
+  }
+
+  /* Per-person exceptions for walking and water (groups of two or more). */
+  function renderExc(field) {
+    var box = $("#" + field + "-exc"), labels = field === "walking" ? WALK_L : WATER_L, map = S[field + "_exc"];
+    if (total() < 2 || !S[field]) { box.hidden = true; box.innerHTML = ""; return; }
+    syncGuests();
+    var open = Object.keys(map).length > 0, ppl = people();
+    var html = '<label class="check"><input type="checkbox" data-excopen="' + field + '"' + (open ? " checked" : "") + "> Not the same for everyone</label>";
+    if (open) {
+      html += ppl.map(function (p) {
+        var v = map[p.key] || S[field];
+        return '<div class="field"><label for="x' + field + p.key + '">' + esc(p.name) + '</label><select id="x' + field + p.key + '" data-excf="' + field + '" data-p="' + p.key + '">' +
+          Object.keys(labels).map(function (k) { return '<option value="' + k + '"' + (v === k ? " selected" : "") + ">" + labels[k] + "</option>"; }).join("") + "</select></div>";
+      }).join("");
+    }
+    box.innerHTML = html; box.hidden = false;
+  }
+  function anyDevice() {
+    if (S.walking === "device") return true;
+    return Object.keys(S.walking_exc).some(function (k) { return S.walking_exc[k] === "device"; });
+  }
+
+  /* ---------- Details: health ---------- */
+  function soloAdult() { return adults() === 1; }
+  function sensitive() { return !!(S.health_notes.trim() || S.allergy_notes.trim() || S.allergy_level === "allergy" || anyDevice()); }
+  function prepHealth() {
+    $("#health_notes").value = S.health_notes;
+    $("#ec_name").value = S.emergency_contact.name; $("#ec_relation").value = S.emergency_contact.relation; $("#ec_phone").value = S.emergency_contact.phone;
+    $("#health_consent").checked = S.health_consent;
+    $("#ec-opt").textContent = soloAdult() ? "Needed when traveling as the only adult" : "Optional";
+    syncHealth();
+  }
+  function syncHealth() {
+    S.health_notes = $("#health_notes").value;
+    S.emergency_contact = { name: $("#ec_name").value.trim(), relation: $("#ec_relation").value.trim(), phone: $("#ec_phone").value.trim() };
+    S.health_consent = $("#health_consent").checked;
+    $("#consent-wrap").hidden = !sensitive();
+  }
+  function validHealth(skipping) {
+    syncHealth();
+    var err = "";
+    if (sensitive() && !S.health_consent) err = skipping ? "" : "Please tick the box so we can keep these details to plan your trip.";
+    if (!err && soloAdult() && !skipping && !(S.emergency_contact.name && S.emergency_contact.phone.replace(/\D/g, "").length >= 7)) err = "As the only adult traveling, please leave us one name and number to call in an emergency.";
+    var box = $("#health-err"); box.textContent = err; box.hidden = !err;
+    return !err;
+  }
+
+  /* ---------- Bind details inputs ---------- */
+  function bindDetails() {
+    document.addEventListener("input", function (e) {
+      var t = e.target;
+      if (t.dataset.g != null) { S.guests[+t.dataset.g][t.dataset.k] = t.value; save(); return; }
+      if (t.closest("#d-health")) { syncHealth(); return; }
+      if (t.closest("#d-table")) { S.diet_other = $("#diet_other").value; S.allergy_notes = $("#allergy_notes").value; return; }
+      if (t.closest("#d-how") || t.closest("#d-about")) {
+        ["stay", "home_city", "occupation", "roots_town", "best_trip", "celebrations", "not_wanted", "other_stops", "special_requests"].forEach(function (k) { S[k] = $("#" + k).value; });
+        save();
+      }
+    });
+    document.addEventListener("change", function (e) {
+      var t = e.target;
+      if (t.dataset.g != null) { S.guests[+t.dataset.g][t.dataset.k] = t.value; save(); return; }
+      if (t.name === "diet") {
+        if (t.value === "none" && t.checked) $$('input[name="diet"]').forEach(function (el) { if (el.value !== "none") el.checked = false; });
+        else if (t.checked) $('input[name="diet"][value="none"]').checked = false;
+        syncDiet(); save(); return;
+      }
+      if (t.name === "allergy_level") { S.allergy_level = t.value; $("#allergy-notes-wrap").hidden = t.value !== "allergy"; if (t.value !== "allergy") { S.allergy_notes = ""; $("#allergy_notes").value = ""; } return; }
+      if (t.id === "diet_all") { S.diet_all = t.checked; if (t.checked) S.diet_exceptions = []; renderDietExc(); save(); return; }
+      if (t.dataset.exc) {
+        S.diet_exceptions = $$("[data-exc]:checked").map(function (el) { return { guest: el.value, code: el.dataset.exc }; });
+        save(); return;
+      }
+      if (t.dataset.excopen) {
+        var f = t.dataset.excopen;
+        S[f + "_exc"] = {};
+        if (t.checked) people().forEach(function (p) { S[f + "_exc"][p.key] = S[f]; });
+        renderExc(f); $("#device-wrap").hidden = !anyDevice(); return;
+      }
+      if (t.dataset.excf) { S[t.dataset.excf + "_exc"][t.dataset.p] = t.value; $("#device-wrap").hidden = !anyDevice(); return; }
+      if (t.name === "walking" || t.name === "water") { S[t.name] = t.value; S[t.name + "_exc"] = {}; renderExc(t.name); $("#device-wrap").hidden = !anyDevice(); return; }
+      if (/^dev_/.test(t.id)) { S.mobility_device[t.id.slice(4)] = t.checked; return; }
+      if (["dropoff", "stairs_cobble", "motion", "heat", "dining_style", "alcohol", "smoke", "photos", "arrival_mode", "pr_before", "pr_roots", "language", "planner", "heard_from"].indexOf(t.name) >= 0) {
+        S[t.name] = t.value;
+        if (t.name === "pr_roots") $("#roots-town-wrap").hidden = t.value !== "yes";
+        save(); return;
+      }
+      if (t.name === "interests") { S.interests = $$('input[name="interests"]:checked').map(function (el) { return el.value; }); save(); return; }
+      if (t.closest("#d-health")) { syncHealth(); return; }
+    });
+  }
+  function fillDetails() {
+    $$('input[name="diet"]').forEach(function (el) { el.checked = S.diet.indexOf(el.value) >= 0; });
+    $("#diet_other").value = S.diet_other; $("#allergy_notes").value = S.allergy_notes;
+    setRadio("allergy_level", S.allergy_level);
+    $("#diet-other-wrap").hidden = S.diet.indexOf("other") < 0;
+    $("#allergy-wrap").hidden = !S.diet.some(function (c) { return ALLERGY_CODES.indexOf(c) >= 0; });
+    $("#allergy-notes-wrap").hidden = S.allergy_level !== "allergy";
+    ["dining_style", "walking", "dropoff", "stairs_cobble", "motion", "heat", "water", "alcohol", "smoke", "photos", "arrival_mode", "pr_before", "pr_roots", "language", "planner", "heard_from"].forEach(function (k) { setRadio(k, S[k]); });
+    ["foldable", "ramp", "transfer"].forEach(function (k) { $("#dev_" + k).checked = !!S.mobility_device[k]; });
+    $("#device-wrap").hidden = !anyDevice();
+    $$('input[name="interests"]').forEach(function (el) { el.checked = S.interests.indexOf(el.value) >= 0; });
+    ["stay", "home_city", "occupation", "roots_town", "best_trip", "celebrations", "not_wanted", "other_stops", "special_requests"].forEach(function (k) { $("#" + k).value = S[k] || ""; });
+    $("#roots-town-wrap").hidden = S.pr_roots !== "yes";
+  }
+
+  /* ---------- Derived values ---------- */
+  function travelStyle() {
+    var st = [];
+    if (S.occasion === "work") st.push("between_meetings");
+    if (["anniversary", "honeymoon", "birthday", "family"].indexOf(S.occasion) >= 0) st.push("celebratory");
+    if (S.picks.draw === "river" || S.pace === "full") st.push("active");
+    if (S.picks.draw === "history" || S.picks.draw === "both") st.push("immersive");
+    if (S.pace === "unhurried" || S.picks.morning === "slow") st.push("restorative");
+    return st.filter(function (v, i, a) { return a.indexOf(v) === i; }).slice(0, 2);
+  }
+  function label(map, v) { return map[v] || v || ""; }
+  var L = {
+    occasion: { anniversary: "An anniversary", honeymoon: "A honeymoon", birthday: "A birthday", family: "A family gathering", work: "Work, with a few days for ourselves", see_island: "Simply to see the island", other: "Something else" },
+    pace: { unhurried: "Unhurried", balanced: "Balanced", full: "Full days" },
+    format: { private: "Private", shared: "Shared, small group (single days)", unsure: "Not sure yet" },
+    contact_pref: { whatsapp: "WhatsApp", text: "Text", email: "Email", call: "A call" },
+    allergy_level: { preference: "A preference", intolerance: "An intolerance", allergy: "An allergy" },
+    dining_style: { chefs_table: "Chef’s table", where_locals_eat: "Where locals eat", both: "A bit of both" },
+    dropoff: { door_always: "At the door whenever the road allows", door_long: "At the door when the walk is long", no_problem: "Walking is no problem" },
+    stairs_cobble: { fine: "Fine", a_few: "A few are fine", avoid: "Avoid if possible" },
+    yesno: { yes: "Yes", no: "No" },
+    alcohol: { yes: "Yes, gladly", a_little: "A little", none: "We’d rather not" },
+    photos: { yes: "Yes, take some for us", places_only: "Only of places", no: "No photos" },
+    arrival_mode: { flight: "Flight", cruise: "Cruise", on_island: "Already on the island" },
+    pr_before: { first: "First time", san_juan: "Yes, mostly San Juan", often: "Yes, several times" },
+    language: { en: "English", es: "Spanish", both: "English and Spanish" },
+    planner: { ourselves: "Ourselves", advisor: "A travel advisor", assistant: "An assistant", concierge: "A concierge" },
+    heard_from: { concierge: "A concierge", advisor: "A travel advisor", instagram: "Instagram", search: "A search", referral: "A friend", other: "Elsewhere" }
+  };
+  var REL_L = {}; RELATIONS.forEach(function (r) { REL_L[r[0]] = r[1]; });
+  var REL_ES = { partner: "pareja", child: "hijo/a", parent: "madre o padre", sibling: "hermano/a", friend: "amistad", colleague: "colega", family: "familia" };
+  var AGE_L = {}; AGE_RANGES.forEach(function (r) { AGE_L[r[0]] = r[1]; });
+  var INT_L = {}; INTERESTS.forEach(function (r) { INT_L[r[0]] = r[1]; });
+  function datesText() {
+    if (S.dates_known && S.arrival_date) return fmtDate(S.arrival_date) + (S.departure_date ? " to " + fmtDate(S.departure_date) : "");
+    if (!S.dates_known) { var m = $("#month").querySelector('option[value="' + S.month + '"]'); return "Flexible: " + (m ? m.textContent : "sometime soon") + ", about " + label({ 1: "one day", 2: "two days", 3: "three days", 4: "four days", 5: "five days", 6: "a week or more" }, S.trip_days); }
+    return "";
+  }
+  function personName(key) { var p = people().filter(function (x) { return x.key === key; })[0]; return p ? p.name : key; }
+
+  /* ---------- Payload ---------- */
+  function payload(stage) {
+    syncGuests();
+    var p = {
+      stage: stage, submitted_at: new Date().toISOString(),
+      lead_name: S.lead_name, email: S.email, phone: S.phone, contact_pref: S.contact_pref,
+      arrival_date: S.dates_known ? S.arrival_date : "", departure_date: S.dates_known ? S.departure_date : "",
+      dates_flexible: S.dates_known ? null : { month: S.month, days: n(S.trip_days) },
+      adults: adults(), children: kids(),
+      child_ages: S.guests.filter(function (g) { return g.type === "child"; }).map(function (g) { return g.age === "" ? null : n(g.age); }),
+      guests: S.guests.map(function (g) { return g.type === "adult" ? { type: "adult", name: g.name, relation: g.relation, age_range: g.age_range } : { type: "child", name: g.name, age: g.age === "" ? null : n(g.age) }; }),
+      occasion: S.occasion, pace: S.pace, remember: S.remember, format: S.format,
+      picks: S.picks, days_of_interest: S.days_kept || [], travel_style: travelStyle(),
+      home_city: S.home_city, stay: S.stay, arrival_mode: S.arrival_mode,
+      diet: S.diet, diet_other: S.diet_other, diet_exceptions: S.diet_all ? [] : S.diet_exceptions, allergy_level: S.allergy_level, allergy_notes: S.allergy_notes, dining_style: S.dining_style,
+      walking: S.walking, walking_exceptions: S.walking_exc, mobility_device: anyDevice() ? S.mobility_device : null, dropoff: S.dropoff, stairs_cobble: S.stairs_cobble, motion: S.motion, heat: S.heat, water: S.water, water_exceptions: S.water_exc,
+      health_notes: S.health_consent ? S.health_notes : "", emergency_contact: S.emergency_contact, health_consent: S.health_consent,
+      interests: S.interests, alcohol: S.alcohol, smoke: S.smoke, photos: S.photos,
+      occupation: S.occupation, best_trip: S.best_trip, pr_before: S.pr_before, pr_roots: S.pr_roots, roots_town: S.roots_town, planner: S.planner, heard_from: S.heard_from, other_stops: S.other_stops, language: S.language, celebrations: S.celebrations, not_wanted: S.not_wanted, special_requests: S.special_requests,
+      signature_name: S.signature_name, signature_date: S.signature_name ? new Date().toISOString().slice(0, 10) : "", consents: S.consents,
+      flags: { cigar_interest: S.smoke === "yes" || S.interests.indexOf("cigars") >= 0 }
+    };
+    if (!S.health_consent) { p.allergy_notes = ""; p.mobility_device = null; }
+    return p;
+  }
+  // Emails each submission through FormSubmit: a summary for the host, the full answers and, once signed,
+  // the agreement. On localhost nothing is sent.
+  function htmlToText(html) {
+    var d = document.createElement("div");
+    d.innerHTML = html.replace(/<\/(h2|h3|h4|p|li|tr|section)>/g, "</$1>\n").replace(/<\/(t[hd]|dt)>/g, ": ").replace(/<\/dd>/g, "\n").replace(/<li>/g, "<li>· ");
+    $$("button", d).forEach(function (b) { b.remove(); });
+    return d.textContent.replace(/: \n/g, "\n").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+  function answersText() { renderReview(); return htmlToText($("#rev").innerHTML); }
+  function submit(data) {
+    window.laLastPayload = data;
+    var signed = !!data.agreement, sketch = data.stage === "sketch";
+    var body = {
+      _subject: "Last Antilla · " + (sketch ? "Nueva consulta" : "Detalles" + (signed ? " y acuerdo firmado" : "")) + ": " + (data.lead_name || "sin nombre"),
+      _template: "table", _captcha: "false", _honey: "",
+      "Cliente": data.lead_name, "Correo": data.email, "Teléfono": data.phone, "Prefiere": data.contact_pref,
+      "Etapa": sketch ? "Boceto (aún sin detalles)" : "Detalles completos",
+      "Acuerdo": signed ? "Firmado por " + data.signature_name + " (versión " + CONFIG.agreement_version + ")" : "Sin firmar",
+      "Ficha del anfitrión": htmlToText(hostSheet(data)),
+      "Respuestas": answersText()
+    };
+    if (signed) body["Acuerdo firmado"] = data.agreement;
+    body["Datos (JSON)"] = JSON.stringify(data, null, 2);
+    if (CONFIG.notify_cc.length) body._cc = CONFIG.notify_cc.join(",");
+    if (LOCAL) { console.log("[Last Antilla] submit (local, not sent)", body); window.laLastEmail = body; return Promise.resolve({ ok: true }); }
+    return fetch("https://formsubmit.co/ajax/" + encodeURIComponent(CONFIG.notify_to), {
+      method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(body)
+    }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { if (j && String(j.success) === "false") throw new Error(j.message || "not sent"); return j; });
+  }
+  function sendFailed(box) {
+    box.innerHTML = "We couldn’t send it just now. Please try again, or write to us at <a href=\"mailto:" + CONFIG.brand_email + "\">" + CONFIG.brand_email + "</a>.";
+    box.hidden = false;
+  }
+
+  /* ---------- Review ---------- */
+  function row(dt, dd) { return dd ? "<dt>" + esc(dt) + "</dt><dd>" + esc(dd) + "</dd>" : ""; }
+  function group(title, target, rows) {
+    var body = rows.join("");
+    return '<section><div class="h"><h3>' + esc(title) + '</h3><button class="link" type="button" data-edit="' + target + '">Edit</button></div>' + (body ? "<dl>" + body + "</dl>" : '<p class="none">Nothing yet. Your host can ask on the call.</p>') + "</section>";
+  }
+  function renderReview() {
+    syncGuests();
+    var rev = [];
+    rev.push(group("Your note", "s-note", [
+      row("Name", S.lead_name),
+      row("Traveling", S.party_mode === "alone" ? "Alone" : adults() + (adults() === 1 ? " adult" : " adults") + (kids() ? ", " + kids() + (kids() === 1 ? " child" : " children") : "")),
+      row("Dates", datesText()), row("Occasion", label(L.occasion, S.occasion)), row("Pace", label(L.pace, S.pace)), row("To remember", S.remember)
+    ]));
+    rev.push(group("Your days and contact", "s-shape", [
+      row("Days you kept", (S.days_kept || []).map(function (id) { return DAY[id].name; }).join(", ")),
+      row("Format", label(L.format, S.format)), row("Email", S.email), row("Phone", S.phone), row("Reach you by", label(L.contact_pref, S.contact_pref))
+    ]));
+    if (needsParty()) rev.push(group("Your party", "d-party", S.guests.map(function (g, i) {
+      return row(g.type === "adult" ? "Adult " + (i + 2) : "Child", [g.name, g.type === "adult" ? label(REL_L, g.relation) : "", g.type === "adult" ? label(AGE_L, g.age_range) : (g.age !== "" ? "age " + g.age : "")].filter(Boolean).join(", "));
+    })));
+    var excTxt = S.diet_all ? "" : S.diet_exceptions.map(function (e) { return personName(e.guest) + ": " + DIET_L[e.code]; }).join("; ");
+    rev.push(group("The table", "d-table", [
+      row("Food", S.diet.map(function (c) { return DIET_L[c]; }).join(", ")), row("Other", S.diet_other), row("Only for", excTxt),
+      row("How serious", label(L.allergy_level, S.allergy_level)), row("Your host should know", S.allergy_notes), row("Style", label(L.dining_style, S.dining_style))
+    ]));
+    var wex = Object.keys(S.walking_exc).map(function (k) { return personName(k) + ": " + WALK_L[S.walking_exc[k]]; }).join("; ");
+    var wax = Object.keys(S.water_exc).map(function (k) { return personName(k) + ": " + WATER_L[S.water_exc[k]]; }).join("; ");
+    var dev = anyDevice() ? ["foldable", "ramp", "transfer"].filter(function (k) { return S.mobility_device[k]; }).map(function (k) { return { foldable: "folds", ramp: "ramp helps", transfer: "help transferring" }[k]; }).join(", ") || "Noted" : "";
+    rev.push(group("Comfort and access", "d-comfort", [
+      row("Walking", wex || label(WALK_L, S.walking)), row("Mobility aid", dev), row("At each stop", label(L.dropoff, S.dropoff)), row("Stairs and cobblestones", label(L.stairs_cobble, S.stairs_cobble)),
+      row("Carsick", label(L.yesno, S.motion)), row("Shade and rest", label(L.yesno, S.heat)), row("Water", wax || label(WATER_L, S.water))
+    ]));
+    rev.push(group("Health", "d-health", [
+      row("Your host should know", S.health_notes.trim()),
+      row("Emergency contact", [S.emergency_contact.name, S.emergency_contact.relation, S.emergency_contact.phone].filter(Boolean).join(", ")),
+      row("Consent", sensitive() ? (S.health_consent ? "Given" : "Not given") : "")
+    ]));
+    rev.push(group("How you travel", "d-how", [
+      row("More of", S.interests.map(function (k) { return INT_L[k]; }).join(", ")), row("Rum and cocktails", label(L.alcohol, S.alcohol)), row("Smoke breaks", label(L.yesno, S.smoke)),
+      row("Photos", label(L.photos, S.photos)), row("Staying", S.stay), row("Arriving by", label(L.arrival_mode, S.arrival_mode))
+    ]));
+    rev.push(group("About you", "d-about", [
+      row("From", S.home_city), row("Work", S.occupation), row("Been before", label(L.pr_before, S.pr_before)), row("Family roots", S.pr_roots === "yes" ? "Yes" + (S.roots_town ? ", " + S.roots_town : "") : label(L.yesno, S.pr_roots)),
+      row("Language", label(L.language, S.language)), row("Best trip", S.best_trip), row("Dates to know", S.celebrations), row("Rather not", S.not_wanted),
+      row("Longer trip", S.other_stops), row("Plans trips", label(L.planner, S.planner)), row("Heard from", label(L.heard_from, S.heard_from)), row("Requests", S.special_requests)
+    ]));
+    $("#rev").innerHTML = rev.join("");
+  }
+
+  /* ---------- Legal document (placeholder text pending review by a lawyer in Puerto Rico) ---------- */
+  function v(x) { return x ? '<mark class="v">' + esc(x) + "</mark>" : '<span class="small">Not provided</span>'; }
+  // Missing config values fall back to general wording; a {{placeholder}} never reaches the client.
+  var FALLBACK = { legal_entity: "Last Antilla Travel Co." };
+  function cfg(k) { return esc(CONFIG[k] || FALLBACK[k] || ""); }
+  function retentionText() { return CONFIG.health_retention ? "deleted " + CONFIG.health_retention + " after the trip" : "deleted once the trip is over and they are no longer needed"; }
+  function renderDoc() {
+    syncGuests();
+    var minors = S.guests.filter(function (g) { return g.type === "child"; }), others = S.guests.filter(function (g) { return g.type === "adult"; });
+    var guestRows = S.guests.map(function (g) { return "<tr><td>" + v(g.name || (g.type === "child" ? "Child" : "Guest")) + "</td><td>" + (g.type === "adult" ? v(label(REL_L, g.relation)) + " · " + v(label(AGE_L, g.age_range)) : "Minor · " + v(g.age !== "" ? "age " + g.age : "")) + "</td></tr>"; }).join("");
+    var dietTxt = S.diet.length ? S.diet.map(function (c) { return DIET_L[c]; }).join(", ") + (S.diet_other ? " (" + S.diet_other + ")" : "") : "";
+    var access = [S.walking ? "Walking: " + (Object.keys(S.walking_exc).length ? Object.keys(S.walking_exc).map(function (k) { return personName(k) + ", " + WALK_L[S.walking_exc[k]].toLowerCase(); }).join("; ") : WALK_L[S.walking]) : "",
+      anyDevice() ? "Mobility aid in use" : "", S.motion === "yes" ? "Motion sickness on winding roads" : "", S.heat === "yes" ? "Needs extra shade and rest in the heat" : "",
+      S.water ? "Water: " + (Object.keys(S.water_exc).length ? Object.keys(S.water_exc).map(function (k) { return personName(k) + ", " + WATER_L[S.water_exc[k]].toLowerCase(); }).join("; ") : WATER_L[S.water]) : ""].filter(Boolean);
+    var html =
+      '<h3 id="doc-title">Guest Information &amp; Participation Agreement</h3>' +
+      '<p class="small" style="margin-top:6px">Prepared ' + esc(fmtDate(new Date().toISOString().slice(0, 10))) + "</p>" +
+      "<h4>1. Parties and trip</h4><table>" +
+      "<tr><th>Company</th><td>" + cfg("legal_entity") + "</td></tr>" +
+      "<tr><th>Guest</th><td>" + v(S.lead_name) + "</td></tr>" +
+      "<tr><th>Contact</th><td>" + v([S.email, S.phone].filter(Boolean).join(" · ")) + "</td></tr>" +
+      "<tr><th>Dates</th><td>" + v(datesText()) + "</td></tr>" +
+      "<tr><th>Party</th><td>" + v(adults() + (adults() === 1 ? " adult" : " adults") + (kids() ? ", " + kids() + (kids() === 1 ? " minor" : " minors") : "")) + "</td></tr>" +
+      "<tr><th>Staying at</th><td>" + v(S.stay) + "</td></tr></table>" +
+      (S.guests.length ? "<h4>2. Guests</h4><table>" + guestRows + "</table>" +
+        (minors.length ? "<p style=\"margin-top:8px\">" + v(S.lead_name) + " signs on behalf of the minors listed.</p>" : "") +
+        (others.length ? "<p>" + v(S.lead_name) + " confirms that the other adults listed have reviewed the information provided about them.</p>" : "") : "<h4>2. Guests</h4><p>" + v(S.lead_name) + " is traveling alone.</p>") +
+      "<h4>3. Dietary needs and access</h4>" +
+      "<p>Food: " + v(dietTxt || "No restrictions given") + (S.allergy_level ? ". Severity: " + v(label(L.allergy_level, S.allergy_level)) : "") + (S.allergy_notes && S.health_consent ? ". Notes: " + v(S.allergy_notes) : "") + ".</p>" +
+      (access.length ? "<ul>" + access.map(function (a) { return "<li>" + v(a) + "</li>"; }).join("") + "</ul>" : "<p>Access: " + v("No needs given") + ".</p>") +
+      "<h4>4. Health disclosure</h4>" +
+      "<p>" + (S.health_notes.trim() && S.health_consent ? v(S.health_notes.trim()) : v("None disclosed")) + "</p>" +
+      "<p>The guest confirms that this information is correct to the best of their knowledge, and will tell the company of any change before the trip. The guest brings and manages any medication the party needs. The company and its hosts are not medical providers.</p>" +
+      "<h4>5. Assumption of risk</h4>" +
+      "<p>Some days include rivers and natural pools, swimming, walks on uneven and wet ground, heat and sun, and long drives on winding mountain roads. The guest understands that these activities carry risks of their own, including injury, chooses which to take part in, and may skip any part of a day at any time.</p>" +
+      "<h4>6. Changes for safety</h4>" +
+      "<p>Weather, water levels, road conditions and closures can change a day. The host may change, shorten or skip any stop when safety calls for it, and may end a guest’s participation in an activity if their conduct puts anyone at risk.</p>" +
+      "<h4>7. Guest responsibilities</h4>" +
+      "<ul><li>Follow the host’s safety instructions, especially near water and on mountain roads.</li>" +
+      "<li>Drink responsibly. Alcohol is offered only to guests of legal drinking age in Puerto Rico (18).</li>" +
+      (minors.length ? "<li>" + v(S.lead_name) + " is responsible for the supervision of the minors listed at all times.</li>" : "") +
+      "<li>Look after personal belongings, which remain the guest’s responsibility.</li></ul>" +
+      "<h4>8. Independent providers</h4>" +
+      "<p>Restaurants, bars, venues, thermal baths and other places visited are independent businesses with their own rules. The company arranges visits and reservations but does not operate them.</p>" +
+      "<h4>9. Limitation of responsibility</h4>" +
+      "<p>To the extent permitted by the laws of Puerto Rico, the company is not responsible for injury, illness, loss or damage that results from the guest’s own choices, from not following the host’s instructions, from information that was not disclosed, from events beyond its control such as weather, or from the acts of independent providers. Nothing in this agreement limits any responsibility that the law does not allow to be limited.</p>" +
+      "<h4>10. Photographs</h4><p>Photos of the guest and party: " + v(label(L.photos, S.photos) || "Not specified; no photos of guests will be taken") + ". No photo is used publicly without separate, explicit permission.</p>" +
+      "<h4>11. Data and privacy</h4>" +
+      "<p>The company keeps the information in this form only to plan and run the trip. Health, allergy and mobility details are " + esc(retentionText()) + ". Information is shared only with the providers of the trip that need it, such as a restaurant for an allergy.</p>" +
+      "<h4>12. Cancellation</h4><p>" + (CONFIG.cancellation_policy ? "Reservations follow this cancellation policy: " + cfg("cancellation_policy") + "." : "Reservations follow the cancellation policy shown when you reserve online.") + "</p>" +
+      "<h4>13. Governing law</h4><p>This agreement is governed by the laws of Puerto Rico.</p>" +
+      "<h4>14. Signature</h4>" +
+      "<p>By typing their full name below, the guest signs this agreement electronically, on their own behalf" + (minors.length ? " and on behalf of the minors listed" : "") + ".</p><table>" +
+      "<tr><th>Signed</th><td>" + (S.signature_name ? v(S.signature_name) : '<span class="small">Pending</span>') + "</td></tr>" +
+      "<tr><th>Date</th><td>" + v(fmtDate(new Date().toISOString().slice(0, 10))) + "</td></tr>" +
+      "<tr><th>Emergency contact</th><td>" + v([S.emergency_contact.name, S.emergency_contact.relation, S.emergency_contact.phone].filter(Boolean).join(", ")) + "</td></tr></table>" +
+      '<p class="small" style="margin-top:14px">Agreement version ' + esc(CONFIG.agreement_version.split(" ")[0]) + "</p>";
+    $("#doc").innerHTML = html;
+    $("#signature_name").value = S.signature_name || S.lead_name;
+    $("#c_read").checked = S.consents.read; $("#c_accurate").checked = S.consents.accurate;
+  }
+
+  /* ---------- Host sheet (internal, Spanish) ---------- */
+  var ES = {
+    occasion: { anniversary: "aniversario", honeymoon: "luna de miel", birthday: "cumpleaños", family: "reunión familiar", work: "viaje de trabajo con días libres", see_island: "conocer la isla", other: "otra ocasión" },
+    pace: { unhurried: "pausado", balanced: "equilibrado", full: "días completos" },
+    format: { private: "privado", shared: "compartido (solo días)", unsure: "aún no sabe" },
+    walk: { easy: "camina sin problema", short_flat: "caminatas cortas en llano", minimal: "lo mínimo posible", device: "silla de ruedas, andador o bastón" },
+    water: { swims: "nada con confianza", edge: "se queda en la orilla", skip: "prefiere no entrar al agua" },
+    pr: { first: "primera vez en PR", san_juan: "ya estuvo, sobre todo en San Juan", often: "ha venido varias veces" }
+  };
+  function hostSheet(p) {
+    var g = p.adults === 1 && !p.children ? "Viaja solo/a" : p.adults === 2 && !p.children ? (p.guests[0] && p.guests[0].relation === "partner" ? "Pareja" : "Dos adultos") : "Grupo de " + (p.adults + p.children) + (p.children ? " con menores" : "");
+    var undecided = !p.stay || /deciding|not sure|undecided|tbd/i.test(p.stay);
+    var line = [g, p.home_city ? "de " + p.home_city : "", ES.occasion[p.occasion], p.pace ? "ritmo " + ES.pace[p.pace] : "", ES.pr[p.pr_before], undecided ? "hospedaje por decidir" : "se queda en " + p.stay, "formato: " + ES.format[p.format]].filter(Boolean).join(", ");
+    var walkVals = Object.keys(p.walking_exceptions || {}).map(function (k) { return p.walking_exceptions[k]; }); if (!walkVals.length && p.walking) walkVals = [p.walking];
+    var split = walkVals.indexOf("easy") >= 0 && (walkVals.indexOf("minimal") >= 0 || walkVals.indexOf("device") >= 0 || walkVals.indexOf("short_flat") >= 0);
+    var waterVals = Object.keys(p.water_exceptions || {}).map(function (k) { return p.water_exceptions[k]; }); if (!waterVals.length && p.water) waterVals = [p.water];
+    var device = walkVals.indexOf("device") >= 0;
+    var people = p.adults + p.children;
+    var grupo = ["Adultos: " + p.adults, "Menores: " + p.children + (p.child_ages.length ? " (edades: " + p.child_ages.map(function (a) { return a == null ? "?" : a; }).join(", ") + ")" : "")];
+    var veh = ["Transporte a coordinar para " + people + (people === 1 ? " persona" : " personas")];
+    if (p.child_ages.some(function (a) { return a != null && a <= 8; })) veh.push("revisar sillas de auto (edades: " + p.child_ages.filter(function (a) { return a != null && a <= 8; }).join(", ") + ")");
+    if (device) veh.push("dispositivo de movilidad: " + (p.mobility_device ? [p.mobility_device.foldable ? "plegable" : "no plegable o sin dato", p.mobility_device.ramp ? "rampa" : "", p.mobility_device.transfer ? "ayuda para subir y bajar" : ""].filter(Boolean).join(", ") : "detalles sin consentimiento; preguntar") + " (espacio de carga)");
+    if (people >= 7) veh.push("grupo grande: vehículo o vehículos a conseguir");
+    grupo.push(veh.join("; "));
+    if (split) grupo.push("RITMO DIVIDIDO: sugerir días con versión doble (Slow Water) o bajada en la puerta");
+    p.guests.forEach(function (x) { grupo.push((x.type === "adult" ? "Adulto" : "Menor") + ": " + (x.name || "sin nombre") + (x.relation ? ", " + (REL_ES[x.relation] || x.relation) : "") + (x.age_range ? ", " + AGE_L[x.age_range].replace(" to ", " a ").replace(" or older", "") + " años" + (x.age_range === "75_plus" ? " o más" : "") : "") + (x.age != null && x.type === "child" ? ", " + x.age + " años" : "")); });
+
+    var alerts = [];
+    if (p.allergy_level === "allergy") alerts.push("ALERGIA: " + p.diet.filter(function (c) { return ALLERGY_CODES.indexOf(c) >= 0; }).map(function (c) { return DIET_L[c]; }).join(", ") + (p.allergy_notes ? ". " + p.allergy_notes : ""));
+    if (p.diet.indexOf("gf_celiac") >= 0) alerts.push("Celiaquía: elegir cocina con cuidado");
+    if (p.diet.indexOf("kosher_strict") >= 0) alerts.push("Kosher estricto: coordinar con restaurantes de antemano");
+    if (p.diet.indexOf("no_pork") >= 0) alerts.push("Sin cerdo: cuidado con Guavate y el lechón");
+    if (device) alerts.push("Movilidad: dispositivo de movilidad en el grupo");
+    else if (walkVals.indexOf("minimal") >= 0) alerts.push("Movilidad: caminar lo mínimo");
+    if (p.motion === "yes") alerts.push("Mareo en carretera: asiento delantero y paradas");
+    if (p.heat === "yes") alerts.push("Calor: sombra y descanso extra");
+    if (p.health_notes) alerts.push("Salud: " + p.health_notes);
+    if (p.children) alerts.push("Menores en el grupo: After Dark queda fuera");
+    if (p.adults === 1 && !(p.emergency_contact && p.emergency_contact.name)) alerts.push("Adulto solo sin contacto de emergencia: pedirlo");
+    if (!p.signature_name) alerts.push("Acuerdo sin firmar: pedir que lo firme antes del viaje (enlace: lastantillatravel.co/plan.html)");
+    if (p.stage === "sketch") alerts.push("Solo envió el boceto: faltan los detalles (mesa, movilidad, salud)");
+
+    var done = [];
+    if (p.arrival_date) done.push("Fechas: " + p.arrival_date + " a " + p.departure_date);
+    if (p.diet.length) done.push("Comida: " + p.diet.map(function (c) { return DIET_L[c]; }).join(", ") + (p.diet_exceptions.length ? " (excepciones: " + p.diet_exceptions.map(function (e) { return personName(e.guest) + " " + DIET_L[e.code]; }).join("; ") + ")" : ""));
+    if (p.dining_style) done.push("Mesa: " + { chefs_table: "chef's table", where_locals_eat: "donde come la gente de aquí", both: "un poco de ambos" }[p.dining_style]);
+    if (walkVals.length) done.push("Caminar: " + walkVals.map(function (w) { return ES.walk[w]; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).join(" / "));
+    if (waterVals.length) done.push("Agua: " + waterVals.map(function (w) { return ES.water[w]; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).join(" / "));
+    if (p.stairs_cobble) done.push("Escaleras y adoquines: " + { fine: "sin problema", a_few: "algunas", avoid: "evitar" }[p.stairs_cobble]);
+    if (p.dropoff) done.push("Bajada: " + { door_always: "en la puerta siempre que se pueda", door_long: "en la puerta si la caminata es larga", no_problem: "caminar no es problema" }[p.dropoff]);
+    if (p.alcohol) done.push("Alcohol: " + { yes: "sí", a_little: "un poco", none: "no" }[p.alcohol]);
+    if (p.smoke) done.push("Fuma: " + (p.smoke === "yes" ? "sí, planificar paradas" : "no"));
+    if (p.photos) done.push("Fotos: " + { yes: "sí", places_only: "solo lugares", no: "no" }[p.photos]);
+    if (p.language) done.push("Idioma: " + { en: "inglés", es: "español", both: "ambos" }[p.language]);
+    if (p.contact_pref) done.push("Contacto preferido: " + p.contact_pref + " · " + [p.email, p.phone].filter(Boolean).join(" · "));
+
+    var qs = [];
+    if (p.occupation) qs.push("Mencionó su oficio (" + p.occupation + "): ¿hay una conversación, una cocina o un taller que le interese?");
+    if (p.arrival_mode === "cruise") qs.push("Viene en crucero: confirmar hora de regreso al puerto.");
+    if (p.dates_flexible) qs.push("Aún sin fechas: fijarlas (piensa en " + (p.dates_flexible.month === "undecided" ? "algún momento pronto" : new Date(p.dates_flexible.month + "-15T12:00:00").toLocaleDateString("es-PR", { month: "long", year: "numeric" })) + ", unos " + p.dates_flexible.days + " días).");
+    if (p.pr_roots === "yes") qs.push("Tiene raíces en la isla" + (p.roots_town ? " (" + p.roots_town + ")" : "") + ": ¿incluir su pueblo?");
+    if (p.celebrations) qs.push("Fechas especiales: " + p.celebrations + ". Preparar un detalle sin anunciar.");
+    if (p.format === "unsure") qs.push("¿Privado o compartido? Explicar la diferencia (recogida y plan fijo).");
+    if (p.format === "shared" && (p.days_of_interest || []).length > 1) qs.push("Pidió compartido y varios días: los viajes son siempre privados; ofrecer días sueltos compartidos o un viaje privado.");
+    if (undecided) qs.push("Hospedaje por decidir: recomendar según estilo y ruta.");
+    if (p.remember) qs.push("Quiere llevarse de recuerdo: “" + p.remember + "”. Partir de ahí.");
+    if (p.best_trip) qs.push("Su mejor viaje: “" + p.best_trip + "”. ¿Qué lo hizo especial?");
+    if (p.flags.cigar_interest) qs.push("Interés posible en la oferta de cigarros.");
+    if (p.not_wanted) qs.push("No quiere: " + p.not_wanted + ".");
+
+    var order = scoreDays(), out = [], why = {};
+    function ruleOut(id, r) { why[id] = r; }
+    if (p.children) ruleOut("after-dark", "hay menores");
+    if (device || walkVals.indexOf("minimal") >= 0) { ruleOut("river-and-stone", "movilidad"); }
+    if (waterVals.indexOf("skip") >= 0 && waterVals.every(function (w) { return w === "skip"; })) ruleOut("river-and-stone", "no entran al agua");
+    if (p.alcohol === "none") ruleOut("after-dark", "no quieren alcohol");
+    var kept = (p.days_of_interest || []).slice();
+    order.forEach(function (id) { if (kept.indexOf(id) < 0 && out.length + kept.length < 5) out.push(id); });
+    var sug = kept.concat(out).filter(function (id) { return !why[id]; }).map(function (id) {
+      var d = DAY[id], notes = [];
+      if (kept.indexOf(id) >= 0) notes.push("lo marcó");
+      if (id === "slow-water" && (device || walkVals.indexOf("minimal") >= 0 || waterVals.indexOf("skip") >= 0 || split)) notes.push("versión directa a los Baños de Coamo");
+      if (id === "old-san-juan" && (p.stairs_cobble === "avoid" || device)) notes.push("ruta llana y bajada en la puerta");
+      if (id === "after-dark" && p.alcohol === "yes" && p.travel_style.indexOf("celebratory") >= 0) notes.push("encaja con la celebración");
+      return d.name + (notes.length ? " (" + notes.join("; ") + ")" : "");
+    });
+    var j = journeyFor(p.dates_flexible ? p.dates_flexible.days : (p.arrival_date && p.departure_date ? Math.round((new Date(p.departure_date) - new Date(p.arrival_date)) / 864e5) : 0));
+    var discard = Object.keys(why).map(function (id) { return DAY[id].name + ": " + why[id]; });
+
+    function ul(arr, cls) { return arr.length ? "<ul" + (cls ? ' class="' + cls + '"' : "") + ">" + arr.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" : '<p class="small" style="margin-top:6px">Nada.</p>'; }
+    return '<div class="ficha"><p class="label">Ficha del anfitrión · interna</p><h2>' + esc(p.lead_name || "Sin nombre") + "</h2>" +
+      '<p class="line">' + esc(line) + "</p>" +
+      "<h3>Alertas</h3>" + ul(alerts, "alerts") +
+      "<h3>Grupo</h3>" + ul(grupo) +
+      "<h3>Logística resuelta</h3>" + ul(done) +
+      "<h3>Para la llamada</h3>" + ul(qs.slice(0, 5)) +
+      "<h3>Días sugeridos</h3>" + ul(sug) + (j ? '<p style="margin-top:8px">Viaje que encaja: <b>' + esc(j.name) + "</b>" + (p.format === "shared" ? " (los viajes son privados)" : "") + "</p>" : "") +
+      (discard.length ? "<h3>Descartados</h3>" + ul(discard) : "") +
+      "</div>";
+  }
+
+  /* ---------- Host mode ---------- */
+  function download(name, text, type) {
+    var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type: type })); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  }
+  function testData(kind) {
+    S = fresh();
+    var base = { picks: { land: "mountains", draw: "history", morning: "slow", evening: "cocktail" }, lead_name: "Jordan Avery", email: "jordan@example.com", phone: "+1 212 555 0148", contact_pref: "whatsapp",
+      arrival_date: "2026-12-04", departure_date: "2026-12-09", occasion: "anniversary", pace: "unhurried", remember: "a long lunch nobody wanted to end", format: "private",
+      home_city: "Boston", stay: "Old San Juan", arrival_mode: "flight", occupation: "Architect", pr_before: "san_juan", language: "en", photos: "places_only", alcohol: "yes", smoke: "no", dining_style: "both",
+      diet: ["no_pork"], walking: "easy", water: "swims", dropoff: "no_problem", stairs_cobble: "fine", motion: "no", heat: "no", interests: ["architecture", "rum"] };
+    Object.keys(base).forEach(function (k) { S[k] = base[k]; });
+    if (kind === "solo") { S.party_mode = "alone"; S.occasion = "birthday"; S.emergency_contact = { name: "Sam Avery", relation: "Sibling", phone: "+1 617 555 0101" }; S.smoke = "yes"; S.interests = ["cigars", "history"]; }
+    if (kind === "solokids") { S.party_mode = "company"; S.others = 0; S.children = 2; S.occasion = "family"; S.guests = [{ type: "child", name: "Mia", age: "6" }, { type: "child", name: "Leo", age: "11" }]; S.water = "edge"; S.emergency_contact = { name: "Sam Avery", relation: "Sibling", phone: "+1 617 555 0101" }; }
+    if (kind === "two") { S.party_mode = "company"; S.others = 1; S.guests = [{ type: "adult", name: "Riley Avery", relation: "partner", age_range: "50_64" }]; }
+    if (kind === "four") { S.party_mode = "company"; S.others = 3; S.occasion = "family"; S.guests = [{ type: "adult", name: "Riley", relation: "partner", age_range: "50_64" }, { type: "adult", name: "Ana", relation: "parent", age_range: "75_plus" }, { type: "adult", name: "Luis", relation: "parent", age_range: "75_plus" }];
+      S.diet = ["no_pork", "nut_allergy"]; S.diet_all = false; S.diet_exceptions = [{ guest: "g1", code: "nut_allergy" }, { guest: "lead", code: "no_pork" }, { guest: "g0", code: "no_pork" }]; S.allergy_level = "allergy"; S.allergy_notes = "Carries an EpiPen";
+      S.walking = "easy"; S.walking_exc = { lead: "easy", g0: "easy", g1: "minimal", g2: "device" }; S.mobility_device = { foldable: true, ramp: false, transfer: true }; S.motion = "yes"; S.health_notes = "Luis takes medication at noon with food."; S.health_consent = true; S.pr_roots = "yes"; S.roots_town = "Utuado"; }
+    if (kind === "big") { S.party_mode = "company"; S.others = 9; S.children = 4; S.occasion = "family"; S.dates_known = false; S.month = "2027-03"; S.trip_days = "5"; S.arrival_date = ""; S.departure_date = ""; S.stay = "still deciding"; S.format = "unsure"; S.arrival_mode = "cruise";
+      syncGuests(); S.guests.forEach(function (g, i) { if (g.type === "child") g.age = String(3 + i); else { g.name = "Guest " + (i + 2); g.relation = "family"; g.age_range = "35_49"; } }); }
+    S.days_kept = null; S.days_kept = scoreDays().slice(0, 3);
+    S.stage = "details";
+    fillDetails(); prepNote();
+  }
+  function hostMode() {
+    var bar = document.createElement("div"); bar.className = "hostbar";
+    bar.innerHTML = "<b>Modo anfitrión</b>" +
+      '<button data-t="solo">1 adulto</button><button data-t="solokids">1 + menores</button><button data-t="two">2</button><button data-t="four">4</button><button data-t="big">13</button>' +
+      '<button data-h="sheet">Ficha</button><button data-h="json">JSON</button><button data-h="dl-json">Bajar JSON</button><button data-h="dl-sheet">Bajar ficha</button><button data-h="close">Cerrar</button>';
+    document.body.appendChild(bar); document.body.style.paddingBottom = "60px";
+    var panel = $("#hostpanel");
+    bar.addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      if (b.dataset.t) { testData(b.dataset.t); panel.hidden = true; show("d-review"); return; }
+      var p = window.laLastPayload || payload(S.stage === "details" ? "details" : "sketch");
+      if (b.dataset.h === "sheet") { panel.innerHTML = '<div class="col">' + hostSheet(p) + "</div>"; panel.hidden = false; }
+      if (b.dataset.h === "json") { panel.innerHTML = '<div class="col ficha"><p class="label">JSON</p><pre>' + esc(JSON.stringify(p, null, 2)) + "</pre></div>"; panel.hidden = false; }
+      if (b.dataset.h === "dl-json") download("last-antilla-" + (p.lead_name || "consulta").replace(/\W+/g, "-").toLowerCase() + ".json", JSON.stringify(p, null, 2), "application/json");
+      if (b.dataset.h === "dl-sheet") download("ficha-" + (p.lead_name || "consulta").replace(/\W+/g, "-").toLowerCase() + ".html", '<!doctype html><meta charset="utf-8"><title>Ficha</title><body style="font-family:sans-serif;max-width:760px;margin:24px auto;padding:0 16px">' + hostSheet(p), "text/html");
+      if (b.dataset.h === "close") panel.hidden = true;
+    });
+  }
+
+  /* ---------- Wiring ---------- */
+  function init() {
+    monthOptions(); renderDietChips(); bindDetails();
+    var draft = loadDraft();
+    if (draft && (draft.lead_name || Object.keys(draft.picks || {}).length)) {
+      $("#resume").hidden = false;
+      $("#resume").addEventListener("click", function () {
+        Object.keys(draft).forEach(function (k) { if (k in S) S[k] = draft[k]; });
+        fillDetails(); prepNote();
+        var pickedAll = ROUNDS.every(function (r) { return S.picks[r.key]; });
+        if (S.stage === "sketch_sent" || S.stage === "details") show("s-sent");
+        else if (!pickedAll) { round = ROUNDS.filter(function (r) { return S.picks[r.key]; }).length; show("s-pick"); }
+        else if (!S.lead_name) show("s-note");
+        else show("s-shape");
+      });
+    }
+    $("#begin").addEventListener("click", function () { round = 0; show("s-pick"); });
+    $("#duo").addEventListener("click", function (e) { var b = e.target.closest(".pic"); if (b) choose(b.dataset.side); });
+    $("#both").addEventListener("click", function () { choose("both"); });
+    document.addEventListener("click", function (e) {
+      var t = e.target.closest("[data-back]"); if (t) { back(); return; }
+      t = e.target.closest("[data-edit]"); if (t) { returnToReview = true; show(t.dataset.edit); return; }
+      t = e.target.closest("[data-next],[data-skip]");
+      if (t) {
+        if (current === "d-health" && !validHealth(t.hasAttribute("data-skip"))) return;
+        if (current === "d-health" && t.hasAttribute("data-skip") && sensitive() && !S.health_consent) { S.health_notes = ""; $("#health_notes").value = ""; }
+        save();
+        show(nextDetail(current));
+      }
+    });
+
+    // Letter
+    var note = $("#note");
+    note.addEventListener("input", function (e) { if (e.target.id === "arrival_date") { $("#departure_date").min = e.target.value; } readNote(); syncNote(); save(); if (S.lead_name) { $("#lead_name").classList.remove("bad"); $("#note-err").hidden = true; } });
+    note.addEventListener("change", function (e) { readNote(); syncNote(); if (!returnToReview && /^(party_mode|others|children|occasion|pace|arrival_date|departure_date|month|trip_days)$/.test(e.target.id)) S.days_kept = null; save(); });
+    $("#remember").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); } });
+    $("#remember").addEventListener("paste", function (e) { e.preventDefault(); var txt = (e.clipboardData || window.clipboardData).getData("text"); document.execCommand("insertText", false, txt.replace(/\s+/g, " ")); });
+    $("#no-dates").addEventListener("click", function () { S.dates_known = false; syncNote(); if (!returnToReview) S.days_kept = null; save(); $("#month").focus(); });
+    $("#yes-dates").addEventListener("click", function () { S.dates_known = true; syncNote(); if (!returnToReview) S.days_kept = null; save(); $("#arrival_date").focus(); });
+    $("#note-next").addEventListener("click", function () {
+      readNote();
+      if (!validNote()) return;
+      if (returnToReview) { show("d-review"); return; }
+      show("s-shape");
+    });
+
+    // Shape
+    $("#sketch").addEventListener("click", function (e) {
+      var b = e.target.closest(".daycard"); if (!b) return;
+      var id = b.dataset.day, i = S.days_kept.indexOf(id);
+      if (i >= 0) S.days_kept.splice(i, 1); else S.days_kept.push(id);
+      b.setAttribute("aria-pressed", String(i < 0)); save();
+    });
+    $("#see-all").addEventListener("click", function () { showAll = !showAll; renderShape(); });
+    $("#format").addEventListener("change", function () { S.format = radioVal("format"); renderShape(); save(); });
+    $("#send-sketch").addEventListener("click", function () {
+      if (!validShape()) return;
+      if (returnToReview) { save(); show("d-review"); return; }
+      S.stage = "sketch_sent"; S.sketch_sent_at = new Date().toISOString(); save();
+      var btn = this; btn.disabled = true;
+      submit(payload("sketch")).then(function () { show("s-sent"); }, function () { sendFailed($("#shape-err")); }).then(function () { btn.disabled = false; });
+    });
+    ["email", "phone"].forEach(function (id) { $("#" + id).addEventListener("input", function () { S[id] = this.value.trim(); save(); }); });
+    $("#contact_pref").addEventListener("change", function () { S.contact_pref = radioVal("contact_pref"); save(); });
+
+    // After sending
+    $("#go-details").addEventListener("click", function () { fillDetails(); show(needsParty() ? "d-party" : "d-table"); });
+    $("#no-details").addEventListener("click", function () { clearDraft(); $("#done-line").textContent = "Your host will be in touch shortly to plan the days with you. If something comes to mind before then, simply tell them on the call."; show("s-done"); });
+    $("#okay").addEventListener("click", function () { returnToReview = false; if (CONFIG.legal_ready) show("d-doc"); else finish(false); });
+    if (!CONFIG.legal_ready) { $("#okay").textContent = "Send the details"; $("#review-sub").textContent = "Change anything you like, then send it to your host."; }
+    $("#doc-edit").addEventListener("click", function () { if (hist[hist.length - 1] === "d-review") hist.pop(); show("d-review", { back: true }); });
+    $("#print").addEventListener("click", function () { S.signature_name = $("#signature_name").value.trim(); renderDoc(); window.print(); });
+    $("#signature_name").addEventListener("input", function () { S.signature_name = this.value.trim(); });
+    $("#c_read").addEventListener("change", function () { S.consents.read = this.checked; });
+    $("#c_accurate").addEventListener("change", function () { S.consents.accurate = this.checked; });
+    function finish(signed) {
+      S.signature_name = signed ? $("#signature_name").value.trim() : "";
+      if (signed) {
+        var err = !S.signature_name ? "Type your full name to sign." : !(S.consents.read && S.consents.accurate) ? "Please tick both boxes to sign." : "";
+        var box = $("#doc-err"); box.textContent = err; box.hidden = !err; if (err) return;
+      } else S.consents = { read: false, accurate: false };
+      S.stage = "details"; S.details_sent_at = new Date().toISOString();
+      var data = payload("details");
+      if (signed) { renderDoc(); data.agreement = htmlToText($("#doc").innerHTML) + "\n\nSigned electronically by " + S.signature_name + " on " + new Date().toISOString() + ". Version " + CONFIG.agreement_version + "."; }
+      submit(data).then(function () {
+        clearDraft(); S.stage = "done";
+        $("#done-line").textContent = signed || !CONFIG.legal_ready ? "Your details are with your host. The call can be all about the days now." : "Your details are with your host. They will send you the agreement to sign before the trip.";
+        show("s-done");
+      }, function () { sendFailed(CONFIG.legal_ready ? $("#doc-err") : $("#review-err")); });
+    }
+    $("#send-full").addEventListener("click", function () { finish(true); });
+    $("#sign-later").addEventListener("click", function () { finish(false); });
+
+    $("#clear").addEventListener("click", function () {
+      if (!confirm("Clear all your answers on this device?")) return;
+      clearDraft(); S = fresh(); round = 0; hist = []; showAll = false; returnToReview = false;
+      $$("input[type=text],input[type=email],input[type=tel],textarea").forEach(function (el) { el.value = ""; });
+      $("#remember").textContent = ""; $$("select").forEach(function (el) { el.selectedIndex = 0; }); setRadio("format", "unsure"); setRadio("contact_pref", "email"); $$("input[type=date]").forEach(function (el) { el.value = ""; }); fillDetails(); $("#resume").hidden = true; show("s-welcome", { back: true });
+    });
+
+    // Config placeholders in the page.
+    $("#retention-text").textContent = retentionText();
+    if (CONFIG.schedule_link) ["#book-call", "#book-call-2"].forEach(function (s) { $(s).href = CONFIG.schedule_link; $(s).hidden = false; });
+
+    window.addEventListener("resize", function () { if (current === "s-note") $$("#note .blank:not(.free):not(.num):not([type=date])").forEach(fit); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (current === "s-note") syncNote(); });
+    // Arriving from the first question on the home page: plan.html?start=mountains|sea|both
+    var st = (location.search.match(/[?&]start=(mountains|sea|both)\b/) || [])[1];
+    if (st) {
+      S.picks.land = st; save(); round = 1; show("s-pick");
+      if (history.replaceState) history.replaceState(null, "", location.pathname + location.search.replace(/[?&]start=\w+/, "").replace(/^&/, "?") + location.hash);
+    }
+    if (HOST) hostMode();
+    track("screen_view", "s-welcome");
+    progress();
+  }
+  init();
+})();
+</script>
+</body>
+</html>
