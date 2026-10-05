@@ -1367,58 +1367,469 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
     });
     return pdfLib;
   }
+  /* ---------- PDF of the inquiry (internal, English) ----------
+     Design: canvas "Inquiry PDF redesign", direction B. Limestone & Sage, Jost (headings) and Hanken Grotesk (text),
+     embedded from assets/fonts (OFL); falls back to Helvetica if the fonts can't load.
+     Page 1: rail with the fixed facts + alerts, call, party, days. Page 2: logistics and the guest. Then the signed agreement. */
+  var FONT_FILES = [["Jost-Medium.ttf", "Jost", "normal"], ["Jost-SemiBold.ttf", "Jost", "bold"], ["HankenGrotesk-Regular.ttf", "Hanken", "normal"], ["HankenGrotesk-SemiBold.ttf", "Hanken", "bold"]];
+  var fontData = null;
+  function loadFonts() {
+    if (fontData) return fontData;
+    fontData = Promise.all(FONT_FILES.map(function (f) {
+      return fetch("assets/fonts/" + f[0]).then(function (r) { if (!r.ok) throw new Error(f[0]); return r.arrayBuffer(); }).then(function (buf) {
+        var b = new Uint8Array(buf), s = "";
+        for (var i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+        return btoa(s);
+      });
+    })).catch(function () { fontData = null; return null; });
+    return fontData;
+  }
+
+  var OCC_EN = { anniversary: "An anniversary", honeymoon: "A honeymoon", birthday: "A birthday", family: "A family gathering", work: "A work trip with a few days off", see_island: "Here to see the island", other: "Another occasion" };
+  var PACE_EN = { unhurried: "at an unhurried pace", balanced: "at a balanced pace", full: "with full days" };
+  var PR_EN = { first: "First time in Puerto Rico", san_juan: "Been before, mostly San Juan", often: "Has been several times" };
+  var FORMAT_EN = { private: "private", shared: "shared, single days", unsure: "format not decided" };
+  function joinNames(a) { return a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1]; }
+  function lc(s) { return s ? s.charAt(0).toLowerCase() + s.slice(1) : ""; }
+  function enDate(iso, opts) { var d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.toLocaleDateString("en-US", opts); }
+  function dateRange(a, b) {
+    if (!a) return "";
+    if (!b) return "From " + enDate(a, { month: "short", day: "numeric", year: "numeric" });
+    var A = new Date(a + "T12:00:00"), B = new Date(b + "T12:00:00");
+    if (A.getFullYear() !== B.getFullYear()) return enDate(a, { month: "short", day: "numeric", year: "numeric" }) + " to " + enDate(b, { month: "short", day: "numeric", year: "numeric" });
+    if (A.getMonth() === B.getMonth()) return enDate(a, { month: "short", day: "numeric" }) + " to " + B.getDate() + ", " + B.getFullYear();
+    return enDate(a, { month: "short", day: "numeric" }) + " to " + enDate(b, { month: "short", day: "numeric" }) + ", " + B.getFullYear();
+  }
+  // Groups a per-person map ({lead: "easy", g0: "minimal"}) into "Jordan and Riley: walks easily · Ana: ...".
+  function byPerson(exc, labels, whole) {
+    var keys = Object.keys(exc || {});
+    if (!keys.length) return whole ? labels[whole] || "" : "";
+    var groups = {}, order = [];
+    keys.forEach(function (k) { var v = exc[k]; if (!groups[v]) { groups[v] = []; order.push(v); } groups[v].push(personName(k)); });
+    if (order.length === 1) return (labels[order[0]] || order[0]) + " (everyone)";
+    return order.map(function (v) { return joinNames(groups[v]) + ": " + lc(labels[v] || v); }).join(" · ");
+  }
+
+  // Everything the PDF says, in English, from the payload. hostSheet() keeps the Spanish on-screen sheet.
+  function pdfSheet(p) {
+    var party = p.adults + p.children, sketch = p.stage === "sketch", signed = !!p.agreement;
+    var walkExc = p.walking_exceptions || {}, waterExc = p.water_exceptions || {};
+    var walkVals = Object.keys(walkExc).map(function (k) { return walkExc[k]; }); if (!walkVals.length && p.walking) walkVals = [p.walking];
+    var waterVals = Object.keys(waterExc).map(function (k) { return waterExc[k]; }); if (!waterVals.length && p.water) waterVals = [p.water];
+    var device = walkVals.indexOf("device") >= 0, minimal = walkVals.indexOf("minimal") >= 0;
+    var split = walkVals.indexOf("easy") >= 0 && (minimal || device || walkVals.indexOf("short_flat") >= 0);
+    function whoWalks(v) { return Object.keys(walkExc).filter(function (k) { return walkExc[k] === v; }).map(personName); }
+    function whoEats(code) { return (p.diet_exceptions || []).filter(function (e) { return e.code === code; }).map(function (e) { return personName(e.guest); }); }
+    var undecided = !p.stay || /deciding|not sure|undecided|tbd/i.test(p.stay);
+    var devTxt = p.mobility_device ? [p.mobility_device.foldable ? "folds" : "", p.mobility_device.ramp ? "ramp helps" : "", p.mobility_device.transfer ? "help getting in and out" : ""].filter(Boolean).join(", ") : "";
+    var ages = p.child_ages.filter(function (a) { return a != null; });
+
+    // Summary and rail
+    var occ = OCC_EN[p.occasion] || "", pace = PACE_EN[p.pace] || "";
+    var summary = [occ ? occ + (pace ? " " + pace : "") + "." : pace ? "Travelling " + pace + "." : "", PR_EN[p.pr_before] ? PR_EN[p.pr_before] + "." : ""].filter(Boolean).join(" ") || "A new inquiry.";
+    var dates, datesSub;
+    if (p.arrival_date) { dates = dateRange(p.arrival_date, p.departure_date); datesSub = p.departure_date ? (Math.round((new Date(p.departure_date) - new Date(p.arrival_date)) / 864e5) + 1) + " days" : ""; }
+    else if (p.dates_flexible) { dates = "Flexible"; datesSub = (p.dates_flexible.month === "undecided" ? "Sometime soon" : "Around " + enDate(p.dates_flexible.month + "-15", { month: "long", year: "numeric" })) + ", about " + p.dates_flexible.days + " days"; }
+    else { dates = "No dates yet"; datesSub = ""; }
+    var facts = [
+      { k: "Dates", v: dates, sub: [datesSub] },
+      { k: "Party", v: p.adults + (p.adults === 1 ? " adult" : " adults"), sub: [p.children ? p.children + (p.children === 1 ? " minor" : " minors") + (ages.length ? " (" + ages.join(", ") + ")" : "") : "No minors"] },
+      { k: "Staying", v: undecided ? "Still deciding" : p.stay, sub: [[p.home_city ? "From " + p.home_city : "", FORMAT_EN[p.format]].filter(Boolean).join(" · ")] },
+      { k: "Contact", v: L.contact_pref[p.contact_pref] || "Not given", sub: [p.phone, p.email] }
+    ];
+    var status = sketch ? [{ ok: false, t: "Sketch only" }, { ok: false, t: "Details missing" }] : [{ ok: true, t: "Details complete" }, { ok: signed, t: signed ? "Agreement signed" : "Agreement not signed" }];
+
+    // Alerts: label, bold lead, text, strong (outlined box)
+    var alerts = [];
+    if (sketch) alerts.push({ label: "Sketch only", lead: "Details missing:", text: "table, mobility and health. Ask on the call.", strong: true });
+    if (p.allergy_level === "allergy") {
+      var acodes = p.diet.filter(function (c) { return ALLERGY_CODES.indexOf(c) >= 0; });
+      var awho = []; acodes.forEach(function (c) { whoEats(c).forEach(function (n2) { if (awho.indexOf(n2) < 0) awho.push(n2); }); });
+      alerts.push({ label: "Allergy", lead: acodes.map(function (c) { return c === "other" && p.diet_other ? p.diet_other : DIET_L[c]; }).join(", ") + (awho.length ? ", " + joinNames(awho) : "") + ".", text: p.allergy_notes || "A true allergy.", strong: true });
+    }
+    if (p.diet.indexOf("gf_celiac") >= 0) alerts.push({ label: "Celiac", lead: "Gluten-free, celiac" + (whoEats("gf_celiac").length ? ", " + joinNames(whoEats("gf_celiac")) : "") + ".", text: "Choose kitchens with care.", strong: true });
+    if (p.diet.indexOf("kosher_strict") >= 0) alerts.push({ label: "Kosher", lead: "Strict kosher" + (whoEats("kosher_strict").length ? ", " + joinNames(whoEats("kosher_strict")) : "") + ".", text: "Arrange restaurants ahead.", strong: false });
+    if (device) {
+      var dw = whoWalks("device"), mw = whoWalks("minimal");
+      alerts.push({ label: "Mobility", lead: (dw.length ? joinNames(dw) + ": wheelchair, walker or cane" : "Wheelchair, walker or cane in the party") + (devTxt ? "," : "."), text: (devTxt ? devTxt + "." : "") + (mw.length ? " " + joinNames(mw) + ": minimal walking." : ""), strong: true });
+    } else if (minimal) {
+      var mw2 = whoWalks("minimal");
+      alerts.push({ label: "Mobility", lead: (mw2.length ? joinNames(mw2) : "The party") + ":", text: "as little walking as possible.", strong: false });
+    }
+    if (p.health_notes) alerts.push({ label: "Health", lead: "", text: p.health_notes, strong: false });
+    if (p.diet.indexOf("no_pork") >= 0) { var pw = whoEats("no_pork"); alerts.push({ label: "No pork", lead: pw.length ? joinNames(pw) + "." : party > 1 ? "Whole party." : "", text: "Mind Guavate and the lechón.", strong: false }); }
+    if (p.motion === "yes") alerts.push({ label: "Carsick", lead: "", text: "Front seat and stops on mountain roads.", strong: false });
+    if (p.heat === "yes") alerts.push({ label: "Heat", lead: "", text: "Extra shade and rest.", strong: false });
+    if (p.children) alerts.push({ label: "Minors", lead: p.children + (p.children === 1 ? " minor" : " minors") + (ages.length ? ", ages " + ages.join(", ") : "") + ".", text: "After Dark is out." + (ages.some(function (a) { return a <= 8; }) ? " Check car seats." : ""), strong: false });
+    if (p.adults === 1 && !(p.emergency_contact && p.emergency_contact.name)) alerts.push({ label: "Emergency", lead: "Traveling alone, no emergency contact.", text: "Ask for one.", strong: true });
+    if (p.stage === "details" && !signed) alerts.push({ label: "Agreement", lead: "Not signed.", text: "Ask them to sign before the trip: lastantillatravel.co/plan.html", strong: true });
+
+    // For the call
+    var qs = [];
+    if (p.remember) qs.push("Wants to bring home “" + p.remember + "”. Start there.");
+    if (p.occupation) qs.push(p.occupation + " by trade: is there a conversation, a kitchen or a workshop that would interest them?");
+    if (p.pr_roots === "yes") qs.push(p.roots_town ? "Family roots in " + p.roots_town + ": include the town?" : "Family roots on the island: which town?");
+    if (p.arrival_mode === "cruise") qs.push("Arriving by cruise: confirm the time back at the port.");
+    if (p.dates_flexible) qs.push("No dates yet: settle them (" + lc(datesSub) + ").");
+    if ((device || minimal) && p.dropoff === "no_problem") qs.push("Said walking is no problem at stops, but someone in the party walks very little: confirm door drop-off.");
+    if (p.celebrations) qs.push("Special dates: " + p.celebrations + ". Plan a detail without announcing it.");
+    if (p.format === "unsure") qs.push("Private or shared? Explain the difference (pickup and a set plan).");
+    if (p.format === "shared" && (p.days_of_interest || []).length > 1) qs.push("Asked for shared and several days: trips are always private. Offer shared single days or a private trip.");
+    if (undecided) qs.push("Still choosing where to stay: recommend by style and route.");
+    if (p.best_trip) qs.push("Best trip ever: “" + p.best_trip + "”. What made it special?");
+    if (p.flags && p.flags.cigar_interest) qs.push("Possible interest in the cigar offer.");
+    if (p.not_wanted) qs.push("Would rather not: " + p.not_wanted + ".");
+
+    // Party
+    var people2 = [{ name: p.lead_name || "No name", rest: "lead" }];
+    p.guests.forEach(function (g, i) { people2.push(g.type === "adult" ? { name: g.name || "Guest " + (i + 2), rest: [lc(REL_L[g.relation] || ""), AGE_L[g.age_range] ? AGE_L[g.age_range].replace(" or older", "+").replace("75+", "75+") : ""].filter(Boolean).join(", ") } : { name: g.name || "Child", rest: g.age != null ? "minor, age " + g.age : "minor" }); });
+    var partyNotes = [];
+    if (split) partyNotes.push({ lead: "Split pace:", text: "gentler versions (Slow Water) or door drop-off." });
+    var veh = ["Transport for " + party + (party === 1 ? " person" : " people")];
+    if (device) veh.push(devTxt ? "chair or walker (" + devTxt + "), cargo space" : "chair or walker, cargo space");
+    if (ages.some(function (a) { return a <= 8; })) veh.push("car seats (ages " + ages.filter(function (a) { return a <= 8; }).join(", ") + ")");
+    if (party >= 7) veh.push("a large group: vehicle or vehicles to arrange");
+    partyNotes.push({ lead: "Vehicle:", text: lc(veh.join("; ")) + "." });
+
+    // Days
+    var order = scoreDays(), why = {}, kept = (p.days_of_interest || []).slice(), more = [];
+    if (p.children) why["after-dark"] = "minors";
+    if (device || minimal) why["river-and-stone"] = "mobility";
+    if (waterVals.length && waterVals.every(function (w) { return w === "skip"; })) why["river-and-stone"] = "no water";
+    if (p.alcohol === "none") why["after-dark"] = "no alcohol";
+    order.forEach(function (id) { if (kept.indexOf(id) < 0 && more.length + kept.length < 5) more.push(id); });
+    var days = kept.concat(more).filter(function (id) { return !why[id]; }).map(function (id) {
+      var notes = [];
+      if (id === "slow-water" && (device || minimal || waterVals.indexOf("skip") >= 0 || split)) notes.push("straight to the Coamo baths");
+      if (id === "old-san-juan" && (p.stairs_cobble === "avoid" || device)) notes.push("flat route, door drop-off");
+      if (id === "after-dark" && p.alcohol === "yes" && p.travel_style.indexOf("celebratory") >= 0) notes.push("fits the celebration");
+      return { name: DAY[id].name, picked: kept.indexOf(id) >= 0, note: notes.join("; ") };
+    });
+    var j = journeyFor(p.dates_flexible ? p.dates_flexible.days : (p.arrival_date && p.departure_date ? Math.round((new Date(p.departure_date) - new Date(p.arrival_date)) / 864e5) : 0));
+    var out = Object.keys(why).map(function (id) { return DAY[id].name + " (" + why[id] + ")"; });
+
+    // Logistics settled
+    var food = "";
+    if (p.diet.indexOf("none") >= 0) food = "No restrictions";
+    else if (p.diet.length) food = p.diet.map(function (c) { var w = whoEats(c), l = c === "other" && p.diet_other ? "Other: " + p.diet_other : DIET_L[c]; return w.length ? l + ": " + joinNames(w) : l; }).join(" · ") + (!(p.diet_exceptions || []).length && party > 1 ? " (everyone)" : "");
+    var logistics = [
+      ["Food", food],
+      ["Allergy detail", p.allergy_level ? (L.allergy_level[p.allergy_level] || p.allergy_level) + (p.allergy_notes ? " · " + p.allergy_notes : "") : ""],
+      ["Table", L.dining_style[p.dining_style]],
+      ["Walking", byPerson(walkExc, WALK_L, p.walking)],
+      ["Mobility aid", device ? (devTxt ? devTxt.charAt(0).toUpperCase() + devTxt.slice(1) : "Details not shared") + " · cargo space" : ""],
+      ["Drop-off", L.dropoff[p.dropoff]],
+      ["Stairs, cobblestones", L.stairs_cobble[p.stairs_cobble]],
+      ["Water", byPerson(waterExc, WATER_L, p.water)],
+      ["Carsick", p.motion === "yes" ? "Yes · front seat and stops" : p.motion === "no" ? "No" : ""],
+      ["Extra shade", p.heat === "yes" ? "Yes" : ""],
+      ["Alcohol", L.alcohol[p.alcohol]],
+      ["Smoke breaks", p.smoke === "yes" ? "Yes · plan stops" : p.smoke === "no" ? "No" : ""],
+      ["Photos", L.photos[p.photos]],
+      ["Language", L.language[p.language]],
+      ["Arriving", L.arrival_mode[p.arrival_mode]],
+      ["Part of a longer trip", p.other_stops]
+    ].filter(function (r) { return r[1]; });
+
+    // About the guest: short facts in a grid, longer answers as paragraphs
+    var about = [
+      ["From", p.home_city], ["Occupation", p.occupation], ["Roots on the island", p.pr_roots === "yes" ? p.roots_town || "Yes" : p.pr_roots === "no" ? "No" : ""],
+      ["Puerto Rico", PR_EN[p.pr_before]], ["Interests", p.interests.map(function (k) { return INT_L[k]; }).join(", ")],
+      ["Occasion and pace", [lc(OCC_EN[p.occasion] || "").replace(/^an? /, ""), lc(L.pace[p.pace] || "")].filter(Boolean).join(" · ")],
+      ["Plans their trips", L.planner[p.planner]], ["Heard of us through", L.heard_from[p.heard_from]]
+    ].filter(function (r) { return r[1]; });
+    var aboutLong = [["Best trip", p.best_trip], ["Special dates", p.celebrations], ["Would rather not", p.not_wanted], ["Special requests", p.special_requests]].filter(function (r) { return r[1]; });
+    var ec = p.emergency_contact || {};
+    var emergency = [ec.name, ec.relation, ec.phone].filter(Boolean).join(" · ");
+    var version = CONFIG.agreement_version.split(/[ ,]/)[0];
+    return {
+      name: p.lead_name || "No name", received: enDate(new Date().toISOString().slice(0, 10), { month: "short", day: "numeric", year: "numeric" }),
+      sketch: sketch, signed: signed, summary: summary, facts: facts, status: status, alerts: alerts, qs: qs.slice(0, 5),
+      people: people2, partyNotes: partyNotes, days: days, journey: j ? j.name : "", out: out,
+      logistics: logistics, about: about, aboutLong: aboutLong, remember: p.remember,
+      agreement: sketch ? null : signed ? { ok: true, text: "Signed electronically by " + p.signature_name + " on " + enDate(p.signature_date, { month: "long", day: "numeric", year: "numeric" }) + ".", sub: "Version " + CONFIG.agreement_version.split(/[ ,]/)[0] + (/provisional/.test(CONFIG.agreement_version) ? " · provisional, not yet reviewed by counsel" : "") } : { ok: false, text: "Not signed yet.", sub: "Ask them to sign before the trip." },
+      emergency: emergency, emergencySub: p.adults === 1 ? "Required when traveling alone" : "Optional for groups; required when traveling alone",
+      version: version, agreementText: p.agreement || ""
+    };
+  }
+
   function buildPdf(data) {
-    return loadPdfLib().then(function (lib) {
-      var r = report(data), doc = new lib.jsPDF({ unit: "pt", format: "letter" });
-      var W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 56, y = M, TW = W - 2 * M;
-      var SAGE = [79, 96, 74], INK = [37, 42, 38], MUTED = [90, 97, 89], RULE = [208, 206, 194], ALERT = [142, 59, 47];
-      function room(h) { if (y + h > H - M) { doc.addPage(); y = M; } }
-      function text(str, opts) {
-        opts = opts || {};
-        doc.setFont("helvetica", opts.bold ? "bold" : "normal"); doc.setFontSize(opts.size || 10.5); doc.setTextColor.apply(doc, opts.color || INK);
-        var indent = opts.indent || 0, lh = (opts.size || 10.5) * 1.42;
-        doc.splitTextToSize(String(str), TW - indent).forEach(function (ln, k) {
-          room(lh); if (opts.bullet && k === 0) { doc.text("•", M + indent - 11, y); }
-          doc.text(ln, M + indent, y); y += lh;
+    return Promise.all([loadPdfLib(), loadFonts()]).then(function (res) {
+      var lib = res[0], fonts = res[1], s = pdfSheet(data);
+      var doc = new lib.jsPDF({ unit: "pt", format: "letter", compress: true });
+      var HEAD = "helvetica", BODY = "helvetica";
+      if (fonts) {
+        try {
+          FONT_FILES.forEach(function (f, i) { doc.addFileToVFS(f[0], fonts[i]); doc.addFont(f[0], f[1], f[2]); });
+          HEAD = "Jost"; BODY = "Hanken";
+        } catch (e) { HEAD = BODY = "helvetica"; }
+      }
+      doc.setProperties({ title: "Inquiry · " + s.name, subject: "Last Antilla Travel Co. · internal", author: "Last Antilla Travel Co." });
+      var PW = 612, PH = 792;
+      var C = { bg: [240, 238, 231], band: [74, 88, 69], accent: [79, 96, 74], ink: [37, 42, 38], muted: [92, 97, 92], support: [138, 123, 95], rule: [207, 203, 190],
+        alert: [134, 97, 26], alertBg: [248, 242, 228], alertLine: [221, 211, 190], card: [255, 255, 255], cardLine: [221, 217, 204], rowLine: [232, 229, 220],
+        railSub: [217, 220, 207], railLabel: [199, 204, 188], footer: [107, 111, 104] };
+      var kinds = [], X0, XR, TW, y;
+      var BOTTOM = PH - 46;
+
+      function font(fam, bold, size, color, cs) { doc.setFont(fam === "head" ? HEAD : BODY, bold ? "bold" : "normal"); doc.setFontSize(size); doc.setTextColor.apply(doc, color || C.ink); doc.setCharSpace(cs || 0); }
+      function put(str, x, yy, opts) { doc.text(String(str), x, yy, Object.assign({ baseline: "top" }, opts || {})); }
+      function lines(str, w) { return doc.splitTextToSize(String(str), w); }
+      function block(str, x, w, size, lh, fam, bold, color) { font(fam, bold, size, color); var ls = lines(str, w); ls.forEach(function (ln, i) { put(ln, x, y + i * size * lh); }); return ls.length * size * lh; }
+      function measure(str, w, size, lh, fam, bold) { font(fam, bold, size); return lines(str, w).length * size * lh; }
+      // Rich text: runs of {t, b}; wraps word by word; returns line arrays of runs.
+      function richLines(runs, w, size, fam) {
+        var out = [[]], lineW = 0;
+        runs.forEach(function (r) {
+          String(r.t).split(/(\s+)/).forEach(function (word) {
+            if (!word) return;
+            font(fam, r.b, size); var ww = doc.getTextWidth(word);
+            if (/^\s+$/.test(word)) { if (lineW > 0) { out[out.length - 1].push({ t: " ", b: r.b, w: doc.getTextWidth(" ") }); lineW += doc.getTextWidth(" "); } return; }
+            if (lineW + ww > w && lineW > 0) {
+              var last = out[out.length - 1]; if (last.length && last[last.length - 1].t === " ") { lineW -= last.pop().w; }
+              out.push([]); lineW = 0;
+            }
+            if (ww > w) { lines(word, w).forEach(function (piece, k) { if (k) { out.push([]); lineW = 0; } font(fam, r.b, size); var pw2 = doc.getTextWidth(piece); out[out.length - 1].push({ t: piece, b: r.b, w: pw2 }); lineW += pw2; }); return; }
+            out[out.length - 1].push({ t: word, b: r.b, w: ww }); lineW += ww;
+          });
         });
+        return out;
       }
-      function section(title, items, opts) {
-        items = (items || []).filter(Boolean); if (!items.length) return;
-        opts = opts || {};
-        room(44); y += 12;
-        doc.setDrawColor.apply(doc, RULE); doc.setLineWidth(0.6); doc.line(M, y - 14, W - M, y - 14);
-        text(title.toUpperCase(), { size: 8.5, bold: true, color: opts.alert ? ALERT : SAGE }); y += 2;
-        items.forEach(function (it) { text(it, { indent: items.length > 1 || opts.list ? 12 : 0, bullet: items.length > 1 || opts.list, color: opts.alert ? ALERT : INK }); });
+      function drawRich(ls, x, size, lh, fam, color, boldColor) {
+        ls.forEach(function (ln, i) { var xx = x; ln.forEach(function (r) { font(fam, r.b, size, r.b && boldColor ? boldColor : color); put(r.t, xx, y + i * size * lh); xx += r.w; }); });
+        return ls.length * size * lh;
       }
-      // Header
-      doc.setFillColor.apply(doc, SAGE); doc.rect(0, 0, W, 6, "F");
-      text("LAST ANTILLA TRAVEL CO.", { size: 8.5, bold: true, color: SAGE }); y += 6;
-      text("Consulta: " + r.name, { size: 20, bold: true }); y += 2;
-      text(r.estado + " · recibida el " + esDate(new Date().toISOString().slice(0, 10)), { size: 9.5, color: MUTED }); y += 4;
-      text(r.line, { size: 11.5 });
-      section("Contacto", [r.contacto]);
-      section("Fechas", [r.fechas]);
-      section("Alertas", r.alerts, { alert: true, list: true });
-      section("Grupo", r.grupo, { list: true });
-      section("Días que marcó", r.marcados, { list: true });
-      section("Días sugeridos", r.sug.concat(r.journey ? ["Viaje que encaja: " + r.journey] : []), { list: true });
-      section("Para la llamada", r.qs, { list: true });
-      section("Logística resuelta", r.done, { list: true });
-      section("Sobre el cliente", r.cliente, { list: true });
-      section("Contacto de emergencia", [r.emergencia]);
-      section("Acuerdo", [r.acuerdo]);
-      if (r.signed) {
-        doc.addPage(); y = M;
-        doc.setFillColor.apply(doc, SAGE); doc.rect(0, 0, W, 6, "F");
-        r.agreementText.split(/\n/).forEach(function (ln) {
-          if (!ln.trim()) { y += 6; return; }
-          if (/^Guest Information/.test(ln)) text(ln, { size: 15, bold: true });
-          else if (/^\d+\. /.test(ln)) { y += 4; text(ln, { size: 10.5, bold: true, color: SAGE }); }
-          else text(ln.replace(/^· /, "• "), { size: 9.5 });
+      function check(x, yy, color) { doc.setDrawColor.apply(doc, color); doc.setLineWidth(1.35); doc.setLineCap("round"); doc.setLineJoin("round"); doc.lines([[2.25, 2.25], [4.5, -5.25]], x, yy + 0.4); doc.setLineCap("butt"); doc.setLineJoin("miter"); }
+      function label(t, x, yy, color, size) { font("head", true, size || 9.75, color || C.accent, 1.35); put(t.toUpperCase(), x, yy); doc.setCharSpace(0); }
+
+      function newPage(kind) {
+        if (kinds.length) doc.addPage();
+        kinds.push(kind);
+        doc.setFillColor.apply(doc, C.bg); doc.rect(0, 0, PW, PH, "F");
+        doc.setFillColor.apply(doc, C.band);
+        if (kind === "first") { doc.rect(0, 0, 186, PH, "F"); X0 = 219; XR = PW - 33; }
+        else {
+          doc.rect(0, 0, 42, PH, "F"); X0 = 84; XR = PW - 48;
+          y = 33;
+          var head = kind === "agreement" ? (kinds.filter(function (k) { return k === "agreement"; }).length === 1 ? "Last Antilla Travel Co." : "Guest Information & Participation Agreement") : "Last Antilla Travel Co. · Inquiry";
+          font("head", false, 9, C.band, 1.6); put(head.toUpperCase(), X0, y + 2); doc.setCharSpace(0);
+          font("head", false, 12, C.ink); put(s.name, XR, y, { align: "right" });
+          doc.setDrawColor.apply(doc, C.rule); doc.setLineWidth(0.75); doc.line(X0, y + 22, XR, y + 22);
+        }
+        TW = XR - X0;
+        y = kind === "first" ? 33 : 33 + 22 + 19.5;
+      }
+      function room(h, kind) { if (y + h > BOTTOM) { var last = kinds[kinds.length - 1]; newPage(kind || (last === "first" ? "slim" : last)); return true; } return false; }
+
+      /* ----- Page 1: rail ----- */
+      newPage("first");
+      var rx = 21, rw = 144, ry = 33;
+      font("head", false, 9, C.railSub, 1.6); put("LAST ANTILLA", rx, ry); put("TRAVEL CO.", rx, ry + 13.5); doc.setCharSpace(0);
+      ry += 13.5 + 13.5 + 18;
+      font("body", false, 9, C.railLabel, 1.2); put("INQUIRY", rx, ry); doc.setCharSpace(0); ry += 15;
+      font("head", false, 25.5, C.bg); lines(s.name, rw).forEach(function (ln) { put(ln, rx, ry); ry += 26.8; });
+      ry += 4; font("body", false, 9.75, C.railSub); put("Received " + s.received, rx, ry); ry += 13.5 + 15;
+      var sh = 7.5 * 2 + s.status.length * 15 - 4.5;
+      doc.setFillColor.apply(doc, C.bg); doc.roundedRect(rx, ry, rw, sh, 4.5, 4.5, "F");
+      s.status.forEach(function (st, i) {
+        var yy = ry + 7.5 + i * 15;
+        if (st.ok) check(rx + 9, yy + 2.5, C.accent);
+        else { doc.setDrawColor.apply(doc, C.alert); doc.setLineWidth(1.1); doc.circle(rx + 12.3, yy + 5.4, 3, "S"); }
+        font("body", true, 9.75, st.ok ? C.band : C.alert); put(st.t, rx + 21, yy);
+      });
+      ry += sh + 19.5;
+      s.facts.forEach(function (f) {
+        font("body", true, 8.25, C.railLabel, 1.2); put(f.k.toUpperCase(), rx, ry); doc.setCharSpace(0); ry += 12;
+        font("body", true, 12, C.bg); lines(f.v, rw).forEach(function (ln) { put(ln, rx, ry); ry += 15; });
+        f.sub.filter(Boolean).forEach(function (t) { font("body", false, 9.75, f.k === "Contact" ? C.bg : C.railSub); lines(t, rw).forEach(function (ln) { put(ln, rx, ry); ry += 13; }); });
+        ry += 11;
+      });
+
+      /* ----- Page 1: main ----- */
+      y += block(s.summary, X0, TW, 15.75, 1.35, "head", false, C.ink) + 16.5;
+      if (s.alerts.length) {
+        label("Alerts", X0, y, C.alert); font("body", true, 9, C.alert); put(String(s.alerts.length), XR, y, { align: "right" }); y += 13.5 + 6;
+        s.alerts.forEach(function (a) {
+          var tx = X0 + 10.5 + 70 + 9, tw = XR - 10.5 - tx;
+          var runs = []; if (a.lead) runs.push({ t: a.lead + " ", b: true }); if (a.text) runs.push({ t: a.text, b: false });
+          var ls = richLines(runs, tw, 11.25, "body"), h = Math.max(ls.length * 11.25 * 1.35, 12) + 15;
+          room(h + 4.5);
+          if (a.strong) { doc.setFillColor.apply(doc, C.alertBg); doc.setDrawColor.apply(doc, C.alert); doc.setLineWidth(1.1); }
+          else { doc.setFillColor.apply(doc, C.card); doc.setDrawColor.apply(doc, C.alertLine); doc.setLineWidth(0.75); }
+          doc.roundedRect(X0, y, TW, h, 4.5, 4.5, "FD");
+          font("body", true, 9, C.alert, 0.5); lines(a.label.toUpperCase(), 70).forEach(function (ln, i) { put(ln, X0 + 10.5, y + 7.5 + 2 + i * 11); }); doc.setCharSpace(0);
+          var y0 = y; y += 7.5; drawRich(ls, tx, 11.25, 1.35, "body", C.ink); y = y0 + h + 4.5;
         });
+        y += 12;
       }
-      var n = doc.getNumberOfPages();
-      for (var k = 1; k <= n; k++) { doc.setPage(k); doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor.apply(doc, MUTED); doc.text("Last Antilla Travel Co. · " + r.name + " · " + k + " / " + n, M, H - 28); }
+      if (s.qs.length) {
+        room(13.5 + 7.5 + 32); label("For the call", X0, y); y += 13.5 + 7.5;
+        s.qs.forEach(function (q, i) {
+          var h = measure(q, TW - 19, 11.25, 1.4, "body", false); room(h);
+          font("head", true, 11.25, C.support); put(String(i + 1), X0, y);
+          y += block(q, X0 + 19, TW - 19, 11.25, 1.4, "body", false, C.ink) + 6;
+        });
+        y += 10;
+      }
+      // Party and days, side by side
+      var cw = (TW - 18) / 2, cx2 = X0 + cw + 18;
+      function partyCol(x, dry) {
+        var yy = 0; function adv(h) { yy += h; }
+        if (!dry) label("The party", x, y + yy); adv(13.5 + 6);
+        s.people.forEach(function (pp) { var ls = richLines([{ t: pp.name, b: true }, { t: pp.rest ? " · " + pp.rest : "", b: false }], cw, 10.5, "body"); if (!dry) { var y0 = y; y = y0 + yy; drawRich(ls, x, 10.5, 1.35, "body", C.ink); y = y0; } adv(ls.length * 10.5 * 1.35 + 3.75); });
+        adv(3);
+        s.partyNotes.forEach(function (nn) { var ls = richLines([{ t: nn.lead + " ", b: true }, { t: nn.text, b: false }], cw, 9.75, "body"); if (!dry) { var y0 = y; y = y0 + yy; drawRich(ls, x, 9.75, 1.4, "body", C.band); y = y0; } adv(ls.length * 9.75 * 1.4 + 4); });
+        return yy;
+      }
+      function daysCol(x, dry) {
+        var yy = 0; function adv(h) { yy += h; }
+        if (!dry) label("Days", x, y + yy); adv(13.5 + 6);
+        s.days.forEach(function (d) {
+          var ls = richLines([{ t: d.name, b: d.picked }, { t: d.note ? " · " + d.note : "", b: false }], cw - 15, 10.5, "body");
+          if (!dry) {
+            doc.setDrawColor.apply(doc, C.accent); doc.setFillColor.apply(doc, C.accent); doc.setLineWidth(1.05);
+            doc.circle(x + 4.5, y + yy + 6.2, d.picked ? 3.75 : 3.3, d.picked ? "F" : "S");
+            var y0 = y; y = y0 + yy; drawRich(ls, x + 15, 10.5, 1.35, "body", C.ink); y = y0;
+          }
+          adv(ls.length * 10.5 * 1.35 + 3.75);
+        });
+        adv(3);
+        var legend = "Filled: picked · Open: fits" + (s.journey ? " · Trip: " + s.journey : "");
+        font("body", false, 9, C.muted); var lg = lines(legend, cw); if (!dry) lg.forEach(function (ln, i) { put(ln, x, y + yy + i * 12); }); adv(lg.length * 12 + 3);
+        if (s.out.length) { var ot = "Not a fit: " + s.out.join(", "); font("body", false, 9, C.muted); var ol = lines(ot, cw); if (!dry) ol.forEach(function (ln, i) { put(ln, x, y + yy + i * 12); }); adv(ol.length * 12); }
+        return yy;
+      }
+      var ph = partyCol(X0, true), dh = daysCol(cx2, true), bh = Math.max(ph, dh) + 13;
+      room(bh);
+      doc.setDrawColor.apply(doc, C.rule); doc.setLineWidth(0.75); doc.line(X0, y, XR, y); y += 13;
+      partyCol(X0, false); daysCol(cx2, false); y += Math.max(ph, dh);
+
+      /* ----- Page 2: logistics and the guest ----- */
+      newPage("slim");
+      function heading(t, sub) { room(13.5 + (sub ? 17 : 0) + 40); label(t, X0, y); y += 13.5 + 4; if (sub) { font("body", false, 9.75, C.muted); put(sub, X0, y); y += 17; } else y += 3.5; }
+      // A white card of label/value rows that can break across pages.
+      function card(rows, lw) {
+        var vx = 12 + lw + 12, vw = TW - vx - 12, size = 10.5, lh = 1.4;
+        var hs = rows.map(function (r) { return Math.max(measure(r[0], lw, size, lh, "body", false), measure(r[1], vw, size, lh, "body", false)) + 11; });
+        var i = 0;
+        while (i < rows.length) {
+          var segH = 0, j2 = i;
+          while (j2 < rows.length && y + segH + hs[j2] <= BOTTOM) { segH += hs[j2]; j2++; }
+          if (j2 === i) { newPage(kinds[kinds.length - 1] === "agreement" ? "agreement" : "slim"); continue; }
+          doc.setFillColor.apply(doc, C.card); doc.setDrawColor.apply(doc, C.cardLine); doc.setLineWidth(0.75); doc.roundedRect(X0, y, TW, segH, 4.5, 4.5, "FD");
+          for (var k = i; k < j2; k++) {
+            var y0 = y; y += 5.5;
+            block(rows[k][0], X0 + 12, lw, size, lh, "body", false, C.muted); block(rows[k][1], X0 + vx, vw, size, lh, "body", false, C.ink);
+            y = y0 + hs[k];
+            if (k < j2 - 1) { doc.setDrawColor.apply(doc, C.rowLine); doc.setLineWidth(0.75); doc.line(X0 + 1, y, XR - 1, y); }
+          }
+          i = j2; if (i < rows.length) newPage(kinds[kinds.length - 1] === "agreement" ? "agreement" : "slim");
+        }
+      }
+      if (s.logistics.length) { heading("Logistics settled", "No need to ask these on the call."); card(s.logistics, 126); y += 16.5; }
+      if (s.about.length || s.aboutLong.length || s.remember) {
+        heading("About the guest");
+        var gw = (TW - 36) / 3;
+        for (var a = 0; a < s.about.length; a += 3) {
+          var cells = s.about.slice(a, a + 3), rh = 0;
+          cells.forEach(function (c) { rh = Math.max(rh, 12 + measure(c[1], gw, 10.5, 1.35, "body", true)); });
+          room(rh + 13.5);
+          cells.forEach(function (c, ci) { var x = X0 + ci * (gw + 18), y0 = y; font("body", false, 9, C.muted); put(c[0], x, y); y += 12; block(c[1], x, gw, 10.5, 1.35, "body", true, C.ink); y = y0; });
+          y += rh + 13.5;
+        }
+        s.aboutLong.forEach(function (r) { var h = 12 + measure(r[1], TW, 10.5, 1.4, "body", false); room(h + 9); font("body", false, 9, C.muted); put(r[0], X0, y); y += 12; y += block(r[1], X0, TW, 10.5, 1.4, "body", false, C.ink) + 9; });
+        if (s.remember) {
+          var qh = measure("“" + s.remember + "”", TW, 15, 1.35, "head", false); room(qh + 22);
+          y += 3; y += block("“" + s.remember + "”", X0, TW, 15, 1.35, "head", false, C.band) + 3;
+          font("body", false, 9, C.muted); put("What they most want to come home remembering", X0, y); y += 13;
+        }
+        y += 12;
+      }
+      // Agreement and emergency contact
+      var bw = (TW - 12) / 2;
+      function infoBox(x, title, ok, text, sub, warn, dry) {
+        var tw2 = bw - 24, h = 9 + 13.5 + 3 + measure(text, tw2, 10.5, 1.4, "body", false) + 3 + measure(sub, tw2, 9, 1.35, "body", false) + 9;
+        if (dry) return h;
+        return function (H) {
+          if (warn) { doc.setFillColor.apply(doc, C.alertBg); doc.setDrawColor.apply(doc, C.alert); doc.setLineWidth(1.1); }
+          else { doc.setFillColor.apply(doc, C.card); doc.setDrawColor.apply(doc, C.cardLine); doc.setLineWidth(0.75); }
+          doc.roundedRect(x, y, bw, H, 4.5, 4.5, "FD");
+          var y0 = y; y += 9;
+          if (ok) { check(x + 12, y + 2.5, C.accent); label(title, x + 27, y, C.accent); } else label(title, x + 12, y, warn ? C.alert : C.accent);
+          y += 13.5 + 3; y += block(text, x + 12, tw2, 10.5, 1.4, "body", false, C.ink) + 3;
+          block(sub, x + 12, tw2, 9, 1.35, "body", false, C.muted); y = y0;
+        };
+      }
+      var boxes = [];
+      if (s.agreement) boxes.push([ "Agreement", s.agreement.ok, s.agreement.text, s.agreement.sub, !s.agreement.ok ]);
+      boxes.push(["Emergency contact", false, s.emergency || "Not provided", s.emergencySub, !s.emergency && s.people.length === 1]);
+      var BH = Math.max.apply(null, boxes.map(function (b2) { return infoBox(0, b2[0], b2[1], b2[2], b2[3], b2[4], true); }));
+      room(BH);
+      boxes.forEach(function (b2, i) { infoBox(X0 + i * (bw + 12), b2[0], b2[1], b2[2], b2[3], b2[4], false)(BH); });
+      y += BH;
+
+      /* ----- The signed agreement, presented ----- */
+      if (s.signed && s.agreementText) {
+        newPage("agreement");
+        var sec = 0, rowsBuf = [], tableSecs = { 1: true, 2: true }, sig = {}, sigLine = "";
+        var SZ = 10.125, LH = 1.55;
+        function flushRows() {
+          if (!rowsBuf.length) return;
+          if (sec === 2) card(rowsBuf.map(function (r) { return [r[0], r[1].split(" · ").join("   ·   ")]; }), 90);
+          else card(rowsBuf, 90);
+          rowsBuf = []; y += 7.5;
+        }
+        s.agreementText.split(/\n/).forEach(function (raw) {
+          var ln = raw.trim();
+          if (!ln) return;
+          var m;
+          if (/^Guest Information/.test(ln)) { y += block(ln, X0, TW, 22.5, 1.15, "head", false, C.ink) + 4; return; }
+          if (/^Prepared /.test(ln)) { font("body", false, 9.75, C.muted); put(ln, X0, y); y += 22; return; }
+          if (/^Agreement version /.test(ln)) return;
+          if (/^Signed electronically by /.test(ln)) { sigLine = ln; return; }
+          if ((m = ln.match(/^(\d+)\. (.+)$/))) {
+            flushRows(); sec = +m[1];
+            room(m[1] === "14" ? 190 : 12 * 1.3 + 6 + SZ * LH * 2);
+            y += 6; font("head", false, 12, C.support); put(m[1], X0, y); var nw = doc.getTextWidth(m[1]) + 6;
+            font("head", false, 12, C.band); put(m[2], X0 + nw, y); y += 12 * 1.3 + 4.5; return;
+          }
+          if (sec === 14 && (m = ln.match(/^([^:]{1,24}): (.*)$/))) { sig[m[1]] = m[2]; return; }
+          if (tableSecs[sec] && (m = ln.match(/^([^:]{1,24}): (.*)$/))) { rowsBuf.push([m[1], m[2]]); return; }
+          flushRows();
+          if (/^· /.test(ln)) { var t = ln.slice(2), h = measure(t, TW - 13.5, SZ, LH, "body", false); room(h); font("body", false, SZ, C.ink); put("•", X0 + 2, y); y += block(t, X0 + 13.5, TW - 13.5, SZ, LH, "body", false, C.ink) + 1.5; return; }
+          var ph2 = measure(ln, TW, SZ, LH, "body", false); room(ph2 <= SZ * LH * 6 ? ph2 : SZ * LH * 2);
+          font("body", false, SZ, C.ink);
+          lines(ln, TW).forEach(function (l2) { room(SZ * LH); font("body", false, SZ, C.ink); put(l2, X0, y); y += SZ * LH; });
+          y += 4.5;
+        });
+        flushRows();
+        // Signature block
+        var signedName = sig.Signed || "", sh2 = 16.5 + 19.5 * 1.2 + 6 + 12 + 13.5 + 12 + 14 + (sigLine ? 12 * 2 : 0) + 13.5;
+        room(sh2, "agreement");
+        doc.setFillColor.apply(doc, C.card); doc.setDrawColor.apply(doc, C.cardLine); doc.setLineWidth(0.75); doc.roundedRect(X0, y, TW, sh2, 4.5, 4.5, "FD");
+        var y0 = y, ix = X0 + 18, iw = TW - 36; y += 16.5;
+        font("head", false, 19.5, signedName && signedName !== "Pending" ? C.ink : C.muted); put(signedName || "Pending", ix, y); y += 19.5 * 1.2 + 6;
+        doc.setDrawColor.apply(doc, C.ink); doc.setLineWidth(0.75); doc.line(ix, y, ix + iw, y); y += 4;
+        font("body", false, 9, C.muted); put("Signed", ix, y); y += 12 + 13.5;
+        var half = (iw - 18) / 2;
+        font("body", false, 9, C.muted); put("Date", ix, y); put("Emergency contact", ix + half + 18, y); y += 12;
+        font("body", false, SZ, C.ink); put(sig.Date || "", ix, y); lines(sig["Emergency contact"] || "Not provided", half).slice(0, 1).forEach(function (l3) { put(l3, ix + half + 18, y); }); y += 14;
+        if (sigLine) { y += 6; font("body", false, 8.25, C.muted); lines(sigLine, iw).slice(0, 2).forEach(function (l4, i) { put(l4, ix, y + i * 11); }); }
+        y = y0 + sh2;
+      }
+
+      /* ----- Footers ----- */
+      var N = doc.getNumberOfPages();
+      for (var k = 1; k <= N; k++) {
+        doc.setPage(k);
+        if (kinds[k - 1] === "first") { font("body", false, 8.25, C.railLabel); put("Internal. Contains health information.", 21, PH - 46); put("Page " + k + " of " + N, 21, PH - 34); }
+        else {
+          font("body", false, 8.25, C.footer);
+          put(kinds[k - 1] === "agreement" ? "Agreement version " + s.version : "Internal. Contains health information.", X0Of(kinds[k - 1]), PH - 34);
+          put("Page " + k + " of " + N, PW - 48, PH - 34, { align: "right" });
+        }
+      }
+      function X0Of() { return 84; }
       return doc.output("blob");
     });
   }
@@ -1561,7 +1972,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
       "<tr><th>Signed</th><td>" + (S.signature_name ? v(S.signature_name) : '<span class="small">Pending</span>') + "</td></tr>" +
       "<tr><th>Date</th><td>" + v(fmtDate(new Date().toISOString().slice(0, 10))) + "</td></tr>" +
       "<tr><th>Emergency contact</th><td>" + v([S.emergency_contact.name, S.emergency_contact.relation, S.emergency_contact.phone].filter(Boolean).join(", ")) + "</td></tr></table>" +
-      '<p class="small" style="margin-top:14px">Agreement version ' + esc(CONFIG.agreement_version.split(" ")[0]) + "</p>";
+      '<p class="small" style="margin-top:14px">Agreement version ' + esc(CONFIG.agreement_version.split(/[ ,]/)[0]) + "</p>";
     $("#doc").innerHTML = html;
     $("#signature_name").value = S.signature_name || S.lead_name;
     $("#c_read").checked = S.consents.read; $("#c_accurate").checked = S.consents.accurate;
@@ -1708,7 +2119,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
       if (b.dataset.h === "dl-json") download("last-antilla-" + (p.lead_name || "consulta").replace(/\W+/g, "-").toLowerCase() + ".json", JSON.stringify(p, null, 2), "application/json");
       if (b.dataset.h === "dl-sheet") download("ficha-" + (p.lead_name || "consulta").replace(/\W+/g, "-").toLowerCase() + ".html", '<!doctype html><meta charset="utf-8"><title>Ficha</title><body style="font-family:sans-serif;max-width:760px;margin:24px auto;padding:0 16px">' + hostSheet(p), "text/html");
       if (b.dataset.h === "close") panel.hidden = true;
-      if (b.dataset.h === "pdf") { var pd = payload("details"); if (S.signature_name || S.lead_name) { renderDoc(); pd.signature_name = S.signature_name || S.lead_name; pd.signature_date = new Date().toISOString().slice(0, 10); pd.agreement = htmlToText($("#doc").innerHTML).replace(/\n(\d+\. )/g, "\n\n$1"); } buildPdf(pd).then(function (bl) { var a = document.createElement("a"); a.href = URL.createObjectURL(bl); a.download = pdfName(pd); document.body.appendChild(a); a.click(); a.remove(); }); }
+      if (b.dataset.h === "pdf") { var pd = payload("details"); if (S.signature_name || S.lead_name) { var keepSig = S.signature_name; S.signature_name = S.signature_name || S.lead_name; renderDoc(); S.signature_name = keepSig; pd.signature_name = $("#signature_name").value || S.lead_name; pd.signature_date = new Date().toISOString().slice(0, 10); pd.agreement = htmlToText($("#doc").innerHTML).replace(/\n(\d+\. )/g, "\n\n$1"); } buildPdf(pd).then(function (bl) { var a = document.createElement("a"); a.href = URL.createObjectURL(bl); a.download = pdfName(pd); document.body.appendChild(a); a.click(); a.remove(); }); }
     });
   }
 
