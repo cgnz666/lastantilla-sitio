@@ -429,6 +429,8 @@ a{color:var(--accent);text-underline-offset:3px;text-decoration-thickness:1px}
 .dd-two .dd-alt{aspect-ratio:3/4;margin-bottom:clamp(32px,6vw,80px)}
 .dd-flip .dd-two{grid-template-columns:minmax(0,1fr) minmax(0,1.65fr)}
 .dd-flip .dd-two .dd-alt{order:-1}
+.dd-strip{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:inherit}
+.dd-strip figure{aspect-ratio:3/4}
 .dd-text{min-width:0}
 .dd-idx{color:var(--support);margin-right:10px}
 .dd-text h2{font-size:clamp(2.3rem,4.4vw,3.6rem);line-height:1.04;margin:14px 0 0}
