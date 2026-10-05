@@ -324,7 +324,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
         <p>My name is <input class="blank" id="lead_name" name="lead_name" type="text" autocomplete="name" aria-label="Your full name" placeholder="your name" data-min="9" required>, and I’ll be traveling <select class="blank" id="party_mode" aria-label="Traveling alone or with company"><option value="alone">alone</option><option value="company">with company</option></select><span id="party-more" hidden>: <input class="blank num" id="others" type="number" min="0" max="99" inputmode="numeric" value="1" aria-label="Number of other adults"> other <span id="adults-word">adult</span> and <input class="blank num" id="children" type="number" min="0" max="30" inputmode="numeric" value="0" aria-label="Number of children under 18"> <span class="nw"><span id="kids-word">children</span>.</span></span><span id="alone-dot">.</span></p>
         <p id="dates-known">We arrive on <input class="blank" id="arrival_date" type="date" aria-label="Arrival date"> and leave on <input class="blank" id="departure_date" type="date" aria-label="Departure date">. <button class="aside" type="button" id="no-dates">No dates yet?</button></p>
         <p id="dates-unknown" hidden>We’re thinking of <select class="blank" id="month" aria-label="Month you are thinking of"></select>, for about <select class="blank" id="trip_days" aria-label="Number of days"><option value="1">one day</option><option value="2">two days</option><option value="3" selected>three days</option><option value="4">four days</option><option value="5">five days</option><option value="6">a week or more</option></select>. <button class="aside" type="button" id="yes-dates">I have dates</button></p>
-        <p>We’re coming for <select class="blank" id="occasion" aria-label="Occasion"><option value="">…</option><option value="anniversary">an anniversary</option><option value="honeymoon">a honeymoon</option><option value="birthday">a birthday</option><option value="family">a family gathering</option><option value="work">work, with a few days for ourselves</option><option value="see_island">simply to see the island</option><option value="other">something else</option></select>, and we’d call our pace <span class="nw"><select class="blank" id="pace" aria-label="Pace"><option value="unhurried">unhurried</option><option value="balanced" selected>balanced</option><option value="full">full days</option></select>.</span></p>
+        <p>We’re coming for <select class="blank" id="occasion" aria-label="Occasion"><option value="">…</option><option value="vacation">a vacation</option><option value="relax">rest and relaxation</option><option value="anniversary">an anniversary</option><option value="honeymoon">a honeymoon</option><option value="birthday">a birthday</option><option value="family">a family gathering</option><option value="party">a party with friends</option><option value="business">business</option><option value="work">work, with a few days for ourselves</option><option value="medical">medical care</option><option value="educational">an educational trip</option><option value="see_island">simply to see the island</option><option value="other">something else</option></select>, and we’d call our pace <span class="nw"><select class="blank" id="pace" aria-label="Pace"><option value="unhurried">unhurried</option><option value="balanced" selected>balanced</option><option value="full">full days</option></select>.</span></p>
         <p>The thing we most want to come home remembering is <span class="blank free" id="remember" role="textbox" contenteditable="true" aria-label="What you most want to come home remembering (optional)" data-ph="…"></span></p>
         <p class="echo" id="echo"></p>
       </form>
@@ -499,7 +499,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
         </div>
       </fieldset>
       <fieldset class="block">
-        <legend>For river days: is everyone comfortable in the water?</legend>
+        <legend>For river and beach days: is everyone comfortable in the water?</legend>
         <div class="chips stack" id="water">
           <label><input type="radio" name="water" value="swims"><span>Swims confidently</span></label>
           <label><input type="radio" name="water" value="edge"><span>Prefers to stay at the edge</span></label>
@@ -754,14 +754,14 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
   // Each round: two photos; a choice adds points to days and sets a field.
   var ROUNDS = [
     { key: "land", q: "Where does your mind go first?",
-      a: { v: "mountains", cap: "The mountains", img: "cordillera-lago.jpg", alt: "A mountain lake in the island's interior under a wide blue sky", pts: { "cordillera": 3, "slow-water": 1, "river-and-stone": 1 } },
+      a: { v: "mountains", cap: "The mountains", img: "rio-roca.jpg", pos: "50% 12%", alt: "Forested hills folding into a rocky river valley in the island's interior", pts: { "cordillera": 3, "slow-water": 1, "river-and-stone": 1 } },
       b: { v: "sea", cap: "The sea", img: "costa-rocosa.jpg", alt: "Waves breaking around a dark rock point in deep blue water", pts: { "loiza": 3, "west-to-the-light": 3 } } },
     { key: "draw", q: "Which one pulls you?",
-      a: { v: "history", cap: "Old facades, old stories", img: "ponce-neoclasico.jpg", alt: "A neoclassical building in Ponce with tall white columns under a blue sky", pts: { "old-san-juan": 3, "southern-city": 3, "loiza": 1 } },
-      b: { v: "river", cap: "Cold river water", img: "rio-canon.jpg", alt: "A still river pool between mossy boulders in a forested canyon", pts: { "river-and-stone": 3, "slow-water": 2 } } },
+      a: { v: "history", cap: "Old facades, old stories", img: "viejo-san-juan-calle.jpg", alt: "A shaded cobblestone street in Old San Juan with pastel facades", pts: { "old-san-juan": 3, "southern-city": 3, "loiza": 1 } },
+      b: { v: "river", cap: "Cold river water", img: "rio-poza-cascada.jpg", pos: "50% 45%", alt: "Two waterfalls falling into a clear green river pool", pts: { "river-and-stone": 3, "slow-water": 2 } } },
     { key: "morning", q: "How do your days begin?",
       a: { v: "slow", cap: "Slow mornings", img: "columpio-mar.jpg", alt: "A wooden swing hanging from a tree over a calm Caribbean bay", pts: { "slow-water": 2, "old-san-juan": 1 } },
-      b: { v: "early", cap: "Out the door early", img: "cascada-valle.jpg", alt: "A waterfall at the edge of a green valley, with trees in the foreground", pts: { "west-to-the-light": 2, "river-and-stone": 1, "cordillera": 1 } } },
+      b: { v: "early", cap: "Out the door early", img: "rio-sendero.jpg", alt: "A dirt trail forking through bamboo and forest in the morning sun", pts: { "west-to-the-light": 2, "river-and-stone": 1, "cordillera": 1 } } },
     { key: "evening", q: "And the evenings?",
       a: { v: "cocktail", cap: "A cocktail as night falls", img: "cocteles-barra-2.jpg", alt: "Three cocktails lined up on a bar, with shelves of bottles behind", pts: { "after-dark": 4 } },
       b: { v: "sunset", cap: "Sunset, then an early night", img: "pareja-atardecer.jpg", alt: "Two people seated on a cliff edge, framed by sea grape branches, watching the sea at sunset", pts: { "west-to-the-light": 2 } } }
@@ -906,7 +906,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
     var duo = $("#duo"); duo.classList.remove("decided");
     ["a", "b"].forEach(function (side) {
       var o = r[side], btn = $('.pic[data-side="' + side + '"]', duo), img = $("img", btn);
-      img.src = IMG + o.img; img.alt = o.alt;
+      img.src = IMG + o.img; img.alt = o.alt; img.style.objectPosition = o.pos || "";
       $(".cap", btn).textContent = o.cap;
       btn.setAttribute("aria-pressed", String(S.picks[r.key] === o.v)); btn.classList.toggle("on", S.picks[r.key] === o.v || S.picks[r.key] === "both");
       btn.setAttribute("aria-label", o.cap);
@@ -1004,6 +1004,9 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
     if (S.pace === "full") { sc["west-to-the-light"] += 1; sc["river-and-stone"] += 1; }
     if (S.occasion === "anniversary" || S.occasion === "honeymoon") { sc["west-to-the-light"] += 1; sc["after-dark"] += 1; }
     if (S.occasion === "family") { sc["loiza"] += 1; sc["old-san-juan"] += 1; sc["after-dark"] -= 9; }
+    if (S.occasion === "relax" || S.occasion === "medical") { sc["slow-water"] += 1; sc["loiza"] += 1; }
+    if (S.occasion === "party") { sc["after-dark"] += 2; sc["loiza"] += 1; }
+    if (S.occasion === "educational") { sc["old-san-juan"] += 1; sc["southern-city"] += 1; sc["loiza"] += 1; }
     if (kids() > 0) sc["after-dark"] = -99;
     // Gentle tiebreak toward the island's anchors.
     sc["old-san-juan"] += 0.3; sc["cordillera"] += 0.2; sc["southern-city"] += 0.1;
@@ -1237,8 +1240,9 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
   /* ---------- Derived values ---------- */
   function travelStyle() {
     var st = [];
-    if (S.occasion === "work") st.push("between_meetings");
-    if (["anniversary", "honeymoon", "birthday", "family"].indexOf(S.occasion) >= 0) st.push("celebratory");
+    if (S.occasion === "work" || S.occasion === "business") st.push("between_meetings");
+    if (["anniversary", "honeymoon", "birthday", "family", "party"].indexOf(S.occasion) >= 0) st.push("celebratory");
+    if (S.occasion === "relax" || S.occasion === "medical") st.push("restorative");
     if (S.picks.draw === "river" || S.pace === "full") st.push("active");
     if (S.picks.draw === "history" || S.picks.draw === "both") st.push("immersive");
     if (S.pace === "unhurried" || S.picks.morning === "slow") st.push("restorative");
@@ -1246,7 +1250,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
   }
   function label(map, v) { return map[v] || v || ""; }
   var L = {
-    occasion: { anniversary: "An anniversary", honeymoon: "A honeymoon", birthday: "A birthday", family: "A family gathering", work: "Work, with a few days for ourselves", see_island: "Simply to see the island", other: "Something else" },
+    occasion: { anniversary: "An anniversary", honeymoon: "A honeymoon", birthday: "A birthday", family: "A family gathering", vacation: "A vacation", relax: "Rest and relaxation", party: "A party with friends", business: "Business", medical: "Medical care", educational: "An educational trip", work: "Work, with a few days for ourselves", see_island: "Simply to see the island", other: "Something else" },
     pace: { unhurried: "Unhurried", balanced: "Balanced", full: "Full days" },
     format: { private: "Private", shared: "Shared, small group (single days)", unsure: "Not sure yet" },
     contact_pref: { whatsapp: "WhatsApp", text: "Text", email: "Email", call: "A call" },
@@ -1385,7 +1389,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
     return fontData;
   }
 
-  var OCC_EN = { anniversary: "An anniversary", honeymoon: "A honeymoon", birthday: "A birthday", family: "A family gathering", work: "A work trip with a few days off", see_island: "Here to see the island", other: "Another occasion" };
+  var OCC_EN = { anniversary: "An anniversary", honeymoon: "A honeymoon", birthday: "A birthday", family: "A family gathering", vacation: "A vacation", relax: "A trip to rest", party: "A party with friends", business: "A business trip", medical: "A trip for medical care", educational: "An educational trip", work: "A work trip with a few days off", see_island: "Here to see the island", other: "Another occasion" };
   var PACE_EN = { unhurried: "at an unhurried pace", balanced: "at a balanced pace", full: "with full days" };
   var PR_EN = { first: "First time in Puerto Rico", san_juan: "Been before, mostly San Juan", often: "Has been several times" };
   var FORMAT_EN = { private: "private", shared: "shared, single days", unsure: "format not decided" };
@@ -1470,6 +1474,8 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
     if (p.occupation) qs.push(p.occupation + " by trade: is there a conversation, a kitchen or a workshop that would interest them?");
     if (p.pr_roots === "yes") qs.push(p.roots_town ? "Family roots in " + p.roots_town + ": include the town?" : "Family roots on the island: which town?");
     if (p.arrival_mode === "cruise") qs.push("Arriving by cruise: confirm the time back at the port.");
+    if (p.occasion === "medical") qs.push("Coming for medical care: plan the days around appointments and rest.");
+    if (p.occasion === "business") qs.push("Business trip: ask which hours and days are free of meetings.");
     if (p.dates_flexible) qs.push("No dates yet: settle them (" + lc(datesSub) + ").");
     if ((device || minimal) && p.dropoff === "no_problem") qs.push("Said walking is no problem at stops, but someone in the party walks very little: confirm door drop-off.");
     if (p.celebrations) qs.push("Special dates: " + p.celebrations + ". Plan a detail without announcing it.");
@@ -2003,7 +2009,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
 
   /* ---------- Host sheet (internal, Spanish) ---------- */
   var ES = {
-    occasion: { anniversary: "aniversario", honeymoon: "luna de miel", birthday: "cumpleaños", family: "reunión familiar", work: "viaje de trabajo con días libres", see_island: "conocer la isla", other: "otra ocasión" },
+    occasion: { anniversary: "aniversario", honeymoon: "luna de miel", birthday: "cumpleaños", family: "reunión familiar", vacation: "vacaciones", relax: "descanso", party: "fiesta con amigos", business: "viaje de negocios", medical: "atención médica", educational: "viaje educativo", work: "viaje de trabajo con días libres", see_island: "conocer la isla", other: "otra ocasión" },
     pace: { unhurried: "pausado", balanced: "equilibrado", full: "días completos" },
     format: { private: "privado", shared: "compartido (solo días)", unsure: "aún no sabe" },
     walk: { easy: "camina sin problema", short_flat: "caminatas cortas en llano", minimal: "lo mínimo posible", device: "silla de ruedas, andador o bastón" },
@@ -2060,6 +2066,8 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
     var qs = [];
     if (p.occupation) qs.push("Mencionó su oficio (" + p.occupation + "): ¿hay una conversación, una cocina o un taller que le interese?");
     if (p.arrival_mode === "cruise") qs.push("Viene en crucero: confirmar hora de regreso al puerto.");
+    if (p.occasion === "medical") qs.push("Viene por atención médica: armar los días alrededor de citas y descanso.");
+    if (p.occasion === "business") qs.push("Viaje de negocios: preguntar qué horas y días tiene libres de reuniones.");
     if (p.dates_flexible) qs.push("Aún sin fechas: fijarlas (piensa en " + (p.dates_flexible.month === "undecided" ? "algún momento pronto" : new Date(p.dates_flexible.month + "-15T12:00:00").toLocaleDateString("es-PR", { month: "long", year: "numeric" })) + ", unos " + p.dates_flexible.days + " días).");
     if (p.pr_roots === "yes") qs.push("Tiene raíces en la isla" + (p.roots_town ? " (" + p.roots_town + ")" : "") + ": ¿incluir su pueblo?");
     if (p.celebrations) qs.push("Fechas especiales: " + p.celebrations + ". Preparar un detalle sin anunciar.");
