@@ -1838,17 +1838,40 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
   function submit(data, opts) {
     window.laLastPayload = data;
     var keepalive = !!(opts && opts.keepalive), ready = opts && opts.pdf;
-    // Leaving the page there's no time to draw it, so it uses the PDF prepared beforehand (see sketchPdf).
-    var pdf = ready ? Promise.resolve(ready) : keepalive ? Promise.resolve(null) : buildPdf(data).catch(function () { return null; });
+    // FormSubmit drops files sent through /ajax/, so the PDF goes in a plain form post (see postWithPdf).
+    // Leaving the page there's no time for that: the essentials go as text.
+    var pdf = keepalive ? Promise.resolve(null) : ready ? Promise.resolve(ready) : buildPdf(data).catch(function () { return null; });
     return pdf.then(function (blob) {
+      if (blob && !canAttach()) blob = null;
       var body = emailBody(data, !!blob);
       if (LOCAL) { console.log("[Last Antilla] submit (local, not sent)", body); window.laLastEmail = body; window.laLastPdf = blob; return { ok: true }; }
+      if (blob) return postWithPdf(body, blob, pdfName(data));
       var fd = new FormData();
       Object.keys(body).forEach(function (k) { fd.append(k, body[k]); });
-      if (blob) fd.append("attachment", blob, pdfName(data));
       return fetch("https://formsubmit.co/ajax/" + encodeURIComponent(CONFIG.notify_to), { method: "POST", headers: { Accept: "application/json" }, body: fd, keepalive: keepalive })
         .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
         .then(function (j) { if (j && String(j.success) === "false") throw new Error(j.message || "not sent"); return j; });
+    });
+  }
+  function canAttach() { try { return !!new DataTransfer().items.add; } catch (e) { return false; } }
+  // A hidden form posts to a hidden iframe, so the page stays put. The reply is cross-origin and
+  // can't be read: the iframe loading counts as sent.
+  function postWithPdf(body, blob, name) {
+    return new Promise(function (resolve, reject) {
+      var id = "la_send_" + Date.now(), frame = document.createElement("iframe"), form = document.createElement("form");
+      frame.name = id; frame.hidden = true; frame.setAttribute("aria-hidden", "true");
+      form.method = "POST"; form.enctype = "multipart/form-data"; form.target = id; form.hidden = true;
+      form.action = "https://formsubmit.co/" + encodeURIComponent(CONFIG.notify_to);
+      Object.keys(body).forEach(function (k) { var i = document.createElement("input"); i.type = "hidden"; i.name = k; i.value = body[k]; form.appendChild(i); });
+      var file = document.createElement("input"), dt = new DataTransfer();
+      dt.items.add(new File([blob], name, { type: "application/pdf" }));
+      file.type = "file"; file.name = "attachment"; file.files = dt.files; form.appendChild(file);
+      var timer = setTimeout(function () { done(new Error("timeout")); }, 45000);
+      function done(err) { clearTimeout(timer); setTimeout(function () { frame.remove(); form.remove(); }, 1000); if (err) reject(err); else resolve({ ok: true }); }
+      // The empty iframe's own about:blank load is readable; FormSubmit's reply is not.
+      frame.addEventListener("load", function () { try { if (frame.contentWindow.location.href === "about:blank") return; } catch (e) {} done(); });
+      document.body.appendChild(frame); document.body.appendChild(form);
+      form.submit();
     });
   }
   // The sketch waits: if the client goes on to the details, one complete email goes at the end.
